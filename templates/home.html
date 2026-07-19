@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Powered Secure Cloud Access Monitoring System{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block head %}
+<style>
+  /* Page-specific hero parallax vars */
+  .hero-section { overflow: hidden; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════ HERO SECTION ═══════════════════════ -->
+<section class="hero-section" id="home">
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+
+      <!-- Left: Copy -->
+      <div class="col-lg-6" id="heroContent">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          LIVE SYSTEM MONITORING
+        </div>
+
+        <h1 class="hero-title">
+          <span id="typingTitle" class="typing-text"></span>
+        </h1>
+
+        <p class="hero-subtitle">
+          An intelligent, AI-driven platform that monitors, detects, and neutralises unauthorised cloud access in real time — engineered for maximum security and operational visibility.
+        </p>
+
+        <div class="hero-actions d-flex flex-wrap gap-3">
+          <a href="{{ url_for('login') }}" class="btn btn-cyber px-4 py-3">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Access System
+          </a>
+          <a href="{{ url_for('register') }}" class="btn btn-outline-cyber px-4 py-3">
+            <i class="bi bi-person-plus-fill me-2"></i>Create Account
+          </a>
+        </div>
+
+        <!-- Hero Stats Row -->
+        <div class="hero-stats d-flex flex-wrap gap-3 mt-4">
+          <div class="hero-stat-card">
+            <span class="hsc-value" data-count="99.9">0</span>
+            <span class="hsc-label">% Uptime</span>
+          </div>
+          <div class="hero-stat-card">
+            <span class="hsc-value" data-count="10000" data-suffix="+">0</span>
+            <span class="hsc-label">Threats Detected</span>
+          </div>
+          <div class="hero-stat-card">
+            <span class="hsc-value" data-count="500" data-suffix="+">0</span>
+            <span class="hsc-label">Users Protected</span>
+          </div>
+          <div class="hero-stat-card">
+            <span class="hsc-value" data-count="200" data-suffix="ms">&lt;0</span>
+            <span class="hsc-label">Response Time</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Illustration -->
+      <div class="col-lg-6 d-flex justify-content-center">
+        <div class="hero-illustration" style="width:420px;height:420px;max-width:100%;">
+          <!-- Orbit rings -->
+          <div class="orbit-ring"><div class="orbit-dot"></div></div>
+          <div class="orbit-ring"><div class="orbit-dot" style="top:auto;bottom:-5px;"></div></div>
+          <div class="orbit-ring"></div>
+          <!-- Central shield -->
+          <i class="bi bi-shield-lock-fill shield-main"></i>
+          <!-- Floating security icons -->
+          <div class="floating-icons-hero" aria-hidden="true">
+            <i class="bi bi-cpu-fill fi" style="top:8%;left:5%;animation-duration:3.5s;"></i>
+            <i class="bi bi-cloud-lock-fill fi" style="top:12%;right:8%;animation-duration:4s;animation-delay:.5s;"></i>
+            <i class="bi bi-bug-fill fi" style="top:75%;left:8%;animation-duration:4.5s;animation-delay:1s;color:var(--red);opacity:.6;"></i>
+            <i class="bi bi-key-fill fi" style="top:70%;right:6%;animation-duration:3.8s;animation-delay:.3s;color:var(--orange);opacity:.6;"></i>
+            <i class="bi bi-database-lock-fill fi" style="top:45%;left:2%;animation-duration:5s;animation-delay:.8s;"></i>
+            <i class="bi bi-wifi fi" style="top:40%;right:2%;animation-duration:4.2s;animation-delay:.2s;color:var(--green);opacity:.6;"></i>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ STATISTICS SECTION ═══════════════════════ -->
+<section class="py-5" id="stats">
+  <div class="container-xl">
+    <div class="row g-4">
+      <div class="col-lg-3 col-md-6 reveal">
+        <div class="stat-card d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:rgba(37,99,235,.15);color:var(--blue);">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" data-count="1250" data-suffix="+">0</div>
+            <div class="stat-label">Total Users Monitored</div>
+            <div class="stat-change" style="color:var(--green);">
+              <i class="bi bi-arrow-up-short"></i>+12% this month
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 reveal" style="transition-delay:.1s">
+        <div class="stat-card d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:rgba(239,68,68,.15);color:var(--red);">
+            <i class="bi bi-shield-exclamation"></i>
+          </div>
+          <div>
+            <div class="stat-value" data-count="3847" data-suffix="+">0</div>
+            <div class="stat-label">Threats Blocked</div>
+            <div class="stat-change" style="color:var(--green);">
+              <i class="bi bi-arrow-up-short"></i>+24% this month
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 reveal" style="transition-delay:.2s">
+        <div class="stat-card d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:rgba(16,185,129,.15);color:var(--green);">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" data-count="98" data-suffix="%">0</div>
+            <div class="stat-label">AI Detection Accuracy</div>
+            <div class="stat-change" style="color:var(--green);">
+              <i class="bi bi-arrow-up-short"></i>Industry leading
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 reveal" style="transition-delay:.3s">
+        <div class="stat-card d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:rgba(245,158,11,.15);color:var(--orange);">
+            <i class="bi bi-clock-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value" data-count="24" data-suffix="/7">0</div>
+            <div class="stat-label">Continuous Monitoring</div>
+            <div class="stat-change" style="color:var(--cyan);">
+              <i class="bi bi-check-circle-fill"></i> Always active
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FEATURES SECTION ═══════════════════════ -->
+<section class="py-5" id="features">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <span class="section-badge"><i class="bi bi-grid-3x3-gap-fill me-1"></i>CORE CAPABILITIES</span>
+      <h2 class="section-title mt-2">Powerful <span class="highlight">Security Features</span></h2>
+      <div class="section-divider"></div>
+      <p class="section-subtitle">Enterprise-grade cybersecurity capabilities designed to protect your cloud infrastructure from evolving threats.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6 reveal">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-cpu-fill"></i></div>
+          <h5>AI Threat Detection</h5>
+          <p>Machine learning algorithms analyse login patterns and behaviour to identify anomalies. Detects novel attack vectors that traditional rules miss.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.08s">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-shield-lock-fill"></i></div>
+          <h5>Secure Authentication</h5>
+          <p>Multi-layered authentication with encrypted credentials and session management. Prevents brute force, credential stuffing, and session hijacking.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.16s">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-cloud-check-fill"></i></div>
+          <h5>Cloud Access Monitoring</h5>
+          <p>Continuous surveillance of every cloud access event with detailed logs. Full visibility into who accesses what, from where, and when.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.24s">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-bell-fill" style="color:var(--orange);"></i></div>
+          <h5>Real-Time Alerts</h5>
+          <p>Instant notifications for suspicious activities delivered via dashboard alerts. Security teams respond to threats within seconds of detection.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.32s">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-bar-chart-fill" style="color:var(--green);"></i></div>
+          <h5>Analytics Dashboard</h5>
+          <p>Interactive charts and visualisations provide actionable security intelligence. Drill down into login trends, device analytics, and geographic data.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.4s">
+        <div class="feature-card-pro">
+          <div class="feature-icon"><i class="bi bi-globe" style="color:var(--glow-blue);"></i></div>
+          <h5>Geographic Tracking</h5>
+          <p>IP geolocation maps access attempts across the globe. Instantly identify logins from unexpected regions or high-risk jurisdictions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ WORKFLOW TIMELINE ═══════════════════════ -->
+<section class="py-5" id="workflow">
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5 reveal-left">
+        <span class="section-badge"><i class="bi bi-diagram-3-fill me-1"></i>HOW IT WORKS</span>
+        <h2 class="section-title mt-2">System <span class="highlight">Workflow</span></h2>
+        <div class="section-divider" style="margin:0 0 20px;"></div>
+        <p class="section-subtitle" style="margin:0;">From user login to AI-powered threat analysis — four seamless steps keeping your cloud environment safe.</p>
+      </div>
+      <div class="col-lg-7 reveal-right">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-step-num">1</div>
+            <h5 class="fw-600 mb-1">User Authentication Request</h5>
+            <p class="text-gray" style="font-size:.88rem;line-height:1.7;margin:0;">A user submits login credentials. The system captures username, IP address, device type, browser, geolocation, and timestamp for analysis.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-step-num">2</div>
+            <h5 class="fw-600 mb-1">Data Collection &amp; Feature Extraction</h5>
+            <p class="text-gray" style="font-size:.88rem;line-height:1.7;margin:0;">Login metadata is extracted and normalised into feature vectors. Historical behaviour patterns are retrieved from the database for comparison.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-step-num">3</div>
+            <h5 class="fw-600 mb-1">AI Threat Analysis</h5>
+            <p class="text-gray" style="font-size:.88rem;line-height:1.7;margin:0;">The trained machine learning model evaluates the feature vectors, assigns a threat score, and classifies the login as legitimate, suspicious, or malicious.</p>
+          </div>
+          <div class="timeline-item" style="margin-bottom:0;">
+            <div class="timeline-step-num">4</div>
+            <h5 class="fw-600 mb-1">Action &amp; Alert Generation</h5>
+            <p class="text-gray" style="font-size:.88rem;line-height:1.7;margin:0;">Based on the threat classification, the system allows access, flags the session, or blocks the attempt — then logs the event and triggers real-time SOC alerts.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TECHNOLOGY STACK ═══════════════════════ -->
+<section class="py-5" id="technology">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <span class="section-badge"><i class="bi bi-cpu me-1"></i>TECH STACK</span>
+      <h2 class="section-title mt-2">Built With <span class="highlight">Modern Technology</span></h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 reveal">
+      <span class="tech-badge"><i class="bi bi-filetype-html"></i> HTML5</span>
+      <span class="tech-badge"><i class="bi bi-filetype-css"></i> CSS3</span>
+      <span class="tech-badge"><i class="bi bi-bootstrap-fill"></i> Bootstrap 5</span>
+      <span class="tech-badge"><i class="bi bi-filetype-js"></i> JavaScript</span>
+      <span class="tech-badge"><i class="bi bi-filetype-py"></i> Python 3</span>
+      <span class="tech-badge"><i class="bi bi-server"></i> Flask</span>
+      <span class="tech-badge"><i class="bi bi-database-fill"></i> SQLite</span>
+      <span class="tech-badge"><i class="bi bi-cpu-fill"></i> Machine Learning</span>
+      <span class="tech-badge"><i class="bi bi-bar-chart-fill"></i> Chart.js</span>
+      <span class="tech-badge"><i class="bi bi-google"></i> Google Fonts</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ AI & CYBERSECURITY BENEFITS ═══════════════════════ -->
+<section class="py-5" id="benefits">
+  <div class="container-xl">
+    <div class="row g-4">
+      <!-- AI Benefits -->
+      <div class="col-lg-6 reveal-left">
+        <div class="glass-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="feature-icon mb-0"><i class="bi bi-cpu-fill"></i></div>
+            <h3 class="mb-0" style="font-size:1.3rem;">AI-Powered Benefits</h3>
+          </div>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--cyan);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Behavioural Anomaly Detection</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">AI learns normal user behaviour and flags deviations that rule-based systems miss entirely.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--cyan);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Predictive Threat Intelligence</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">ML models predict potential attack vectors before breaches occur, enabling proactive defence.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--cyan);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Reduced False Positives</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Contextual analysis reduces alert fatigue by distinguishing genuine threats from benign anomalies.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--cyan);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Continuous Self-Improvement</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Models retrain on new threat data, improving accuracy over time without manual rule updates.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Cybersecurity Benefits -->
+      <div class="col-lg-6 reveal-right">
+        <div class="glass-card p-4 h-100">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="feature-icon mb-0" style="background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--red);">
+              <i class="bi bi-shield-fill-check"></i>
+            </div>
+            <h3 class="mb-0" style="font-size:1.3rem;">Cybersecurity Benefits</h3>
+          </div>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Zero-Trust Architecture Support</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Every access request is verified regardless of origin, enforcing least-privilege principles throughout.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Comprehensive Audit Trails</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Immutable logs of all access events support forensic investigations and compliance reporting.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Insider Threat Detection</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Flags unusual access by legitimate users — off-hours logins, unusual data volumes, or location changes.</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);font-size:1.1rem;flex-shrink:0;"></i>
+              <div>
+                <strong style="font-size:.9rem;">Rapid Incident Response</strong>
+                <p class="text-gray mb-0" style="font-size:.83rem;margin-top:2px;">Real-time dashboard alerts cut mean time to respond (MTTR) from hours to minutes for SOC teams.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SDG CONTRIBUTION ═══════════════════════ -->
+<section class="py-5" id="about">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <span class="section-badge"><i class="bi bi-globe me-1"></i>SUSTAINABLE DEVELOPMENT</span>
+      <h2 class="section-title mt-2">SDG <span class="highlight">Contribution</span></h2>
+      <div class="section-divider"></div>
+      <p class="section-subtitle">This project aligns with the United Nations Sustainable Development Goals, contributing to a safer and more equitable digital world.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-5 col-md-6 reveal">
+        <div class="sdg-card">
+          <div class="sdg-number">SDG 9</div>
+          <h4 class="mt-2 mb-3" style="font-size:1.1rem;">Industry, Innovation &amp; Infrastructure</h4>
+          <p class="text-gray" style="font-size:.88rem;line-height:1.8;margin:0;">
+            By building resilient, AI-powered digital infrastructure, this system promotes secure innovation in cloud computing — enabling organisations to adopt modern technology with confidence while protecting critical systems from cyber threats.
+          </p>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-lightning-fill"></i> Innovation</span>
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-building"></i> Infrastructure</span>
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-gear-fill"></i> Technology</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 col-md-6 reveal" style="transition-delay:.15s">
+        <div class="sdg-card">
+          <div class="sdg-number" style="background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">SDG 16</div>
+          <h4 class="mt-2 mb-3" style="font-size:1.1rem;">Peace, Justice &amp; Strong Institutions</h4>
+          <p class="text-gray" style="font-size:.88rem;line-height:1.8;margin:0;">
+            Protecting access to digital systems promotes justice by preventing unauthorised access, data theft, and cybercrime. Transparent audit trails and robust monitoring help build accountable, trustworthy digital institutions for everyone.
+          </p>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-shield-fill-check"></i> Security</span>
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-eye-fill"></i> Accountability</span>
+            <span class="tech-badge" style="font-size:.75rem;padding:5px 12px;"><i class="bi bi-people-fill"></i> Justice</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TESTIMONIALS ═══════════════════════ -->
+<section class="py-5">
+  <div class="container-xl">
+    <div class="text-center mb-5 reveal">
+      <span class="section-badge"><i class="bi bi-chat-quote-fill me-1"></i>TESTIMONIALS</span>
+      <h2 class="section-title mt-2">What <span class="highlight">Experts Say</span></h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6 reveal">
+        <div class="testimonial-card">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="avatar">AK</div>
+            <div>
+              <div class="author">Dr. Arun Kumar</div>
+              <div class="role">Professor, Cybersecurity Dept.</div>
+            </div>
+          </div>
+          <div class="stars mb-2"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+          <p class="quote">"An exceptionally well-engineered project. The integration of AI-driven anomaly detection with a real-time SOC dashboard demonstrates a deep understanding of modern cybersecurity principles."</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.1s">
+        <div class="testimonial-card">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--green),var(--cyan));">SR</div>
+            <div>
+              <div class="author">Sunita Raghavan</div>
+              <div class="role">Senior SOC Analyst, TechCorp</div>
+            </div>
+          </div>
+          <div class="stars mb-2"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+          <p class="quote">"The dashboard is on par with commercial SOC platforms I've used professionally. The threat detection accuracy and alert categorisation would genuinely add value in a real enterprise environment."</p>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:.2s">
+        <div class="testimonial-card">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--orange),var(--red));">MJ</div>
+            <div>
+              <div class="author">Mohammed Javid</div>
+              <div class="role">Cloud Security Engineer, InfoSys</div>
+            </div>
+          </div>
+          <div class="stars mb-2"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i></div>
+          <p class="quote">"Impressive use of machine learning for access monitoring. The visual design is premium and the geographic threat tracking adds a dimension that most student projects completely overlook."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CTA SECTION ═══════════════════════ -->
+<section class="py-5">
+  <div class="container-xl">
+    <div class="glass-card p-5 text-center reveal" style="background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(56,189,248,.08));border-color:rgba(56,189,248,.3);">
+      <i class="bi bi-shield-lock-fill" style="font-size:3rem;color:var(--cyan);animation:pulseGlow 3s ease-in-out infinite;"></i>
+      <h2 class="section-title mt-3">Ready to <span class="highlight">Secure Your Cloud</span>?</h2>
+      <p class="section-subtitle mx-auto mb-4">Join the monitoring system and get real-time AI-powered protection for your cloud infrastructure.</p>
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{{ url_for('register') }}" class="btn btn-cyber px-5 py-3">
+          <i class="bi bi-person-plus-fill me-2"></i>Get Started Free
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-cyber px-5 py-3">
+          <i class="bi bi-speedometer2 me-2"></i>View Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  // ---- Typing effect ----
+  const title = "AI-Powered Secure Cloud Access Monitoring System";
+  const el = document.getElementById('typingTitle');
+  if (!el) return;
+  let i = 0;
+  function type() {
+    if (i < title.length) { el.textContent += title[i++]; setTimeout(type, 55); }
+    else { el.style.borderRight = 'none'; }
+  }
+  setTimeout(type, 300);
+
+  // ---- Counter animation ----
+  function animateCounter(el) {
+    const target  = parseFloat(el.dataset.count);
+    const suffix  = el.dataset.suffix || '';
+    const isFloat = target % 1 !== 0;
+    const duration = 2000;
+    const start = performance.now();
+    function update(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const val = isFloat ? (target * ease).toFixed(1) : Math.round(target * ease);
+      el.textContent = val + suffix;
+      if (t < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const counters = document.querySelectorAll('[data-count]');
+  const cObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { animateCounter(e.target); cObs.unobserve(e.target); }
+    });
+  }, { threshold: .3 });
+  counters.forEach(c => cObs.observe(c));
+
+  // ---- Mouse parallax on hero ----
+  const heroContent = document.getElementById('heroContent');
+  document.addEventListener('mousemove', (e) => {
+    if (!heroContent) return;
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    const dx = (e.clientX - cx) / cx, dy = (e.clientY - cy) / cy;
+    heroContent.style.transform = `translate(${dx * 6}px, ${dy * 4}px)`;
+  });
+})();
+</script>
+{% endblock %}

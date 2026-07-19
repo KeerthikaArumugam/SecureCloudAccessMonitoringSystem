@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AI-Powered Secure Cloud Access Monitoring System{% endblock %}</title>
+
+  <!-- SEO -->
+  <meta name="description" content="AI-Powered Secure Cloud Access Monitoring System — Final Year Engineering Project">
+  <meta name="theme-color" content="#07111F">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts — Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Global Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══════════════════════ ANIMATED CYBER BACKGROUND ═══════════════════════ -->
+<div class="cyber-bg" id="cyberBg">
+  <div class="bg-grid"></div>
+  <div class="bg-radial"></div>
+  <canvas id="particlesCanvas"></canvas>
+  <canvas id="networkCanvas"></canvas>
+  <div class="bg-gradient-overlay"></div>
+</div>
+
+<!-- ═══════════════════════ NAVBAR ═══════════════════════ -->
+<nav class="navbar navbar-expand-lg navbar-cyber" id="mainNavbar" aria-label="Main navigation">
+  <div class="container-xl">
+
+    <!-- Brand -->
+    <a class="navbar-brand" href="{{ url_for('home') }}">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <span>Secure Cloud Access</span>
+    </a>
+
+    <!-- Toggler -->
+    <button class="navbar-toggler border-0" type="button"
+            data-bs-toggle="collapse" data-bs-target="#navbarMain"
+            aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Nav Links -->
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto gap-1">
+        <li class="nav-item">
+          <a class="nav-link {% block nav_home %}{% endblock %}" href="{{ url_for('home') }}">
+            <i class="bi bi-house-fill me-1"></i>Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('home') }}#features">
+            <i class="bi bi-grid-3x3-gap-fill me-1"></i>Features
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('home') }}#technology">
+            <i class="bi bi-cpu-fill me-1"></i>Technology
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('home') }}#about">
+            <i class="bi bi-info-circle-fill me-1"></i>About
+          </a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+        <a class="nav-link btn-nav-login px-3 py-2" href="{{ url_for('login') }}">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Login
+        </a>
+        <a class="nav-link btn-nav-register px-3 py-2" href="{{ url_for('register') }}">
+          <i class="bi bi-person-plus-fill me-1"></i>Register
+        </a>
+        <a class="nav-link btn-nav-register px-3 py-2" href="{{ url_for('dashboard') }}" style="background:linear-gradient(135deg,#10B981,#38BDF8);">
+          <i class="bi bi-speedometer2 me-1"></i>Dashboard
+        </a>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+{% block content %}{% endblock %}
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer-cyber" id="footer">
+  <div class="container-xl">
+    <div class="row g-4">
+      <!-- Brand Column -->
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-shield-lock-fill" style="font-size:1.8rem;color:var(--cyan);"></i>
+          <span class="footer-logo">Secure Cloud Access</span>
+        </div>
+        <p class="footer-text">
+          An AI-Powered Secure Cloud Access Monitoring System built as a Final Year Engineering Project. Protecting digital infrastructure with intelligent threat detection.
+        </p>
+        <div class="d-flex gap-2 mt-3">
+          <a href="#" class="social-icon" aria-label="GitHub"><i class="bi bi-github"></i></a>
+          <a href="#" class="social-icon" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" class="social-icon" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-icon" aria-label="Email"><i class="bi bi-envelope-fill"></i></a>
+        </div>
+      </div>
+      <!-- Quick Links -->
+      <div class="col-lg-2 col-md-3 col-6">
+        <p class="footer-heading">Quick Links</p>
+        <a href="{{ url_for('home') }}" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Home</a>
+        <a href="{{ url_for('home') }}#features" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Features</a>
+        <a href="{{ url_for('home') }}#technology" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Technology</a>
+        <a href="{{ url_for('login') }}" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Login</a>
+        <a href="{{ url_for('register') }}" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Register</a>
+      </div>
+      <!-- Features -->
+      <div class="col-lg-3 col-md-3 col-6">
+        <p class="footer-heading">Features</p>
+        <a href="#" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>AI Threat Detection</a>
+        <a href="#" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Real-Time Monitoring</a>
+        <a href="#" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Security Alerts</a>
+        <a href="#" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>Login Analytics</a>
+        <a href="#" class="footer-link"><i class="bi bi-chevron-right me-1" style="color:var(--cyan);font-size:.7rem;"></i>SOC Dashboard</a>
+      </div>
+      <!-- Project Info -->
+      <div class="col-lg-3 col-md-6">
+        <p class="footer-heading">Project Info</p>
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard-fill" style="color:var(--cyan);"></i>
+            <span class="footer-text mb-0">Final Year Engineering Project</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-code-slash" style="color:var(--cyan);"></i>
+            <span class="footer-text mb-0">Python Flask + AI/ML</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check-fill" style="color:var(--green);"></i>
+            <span class="footer-text mb-0">Cybersecurity Focused</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-globe" style="color:var(--cyan);"></i>
+            <span class="footer-text mb-0">SDG 9 &amp; SDG 16 Aligned</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-divider">
+
+    <div class="row align-items-center">
+      <div class="col-md-6 text-center text-md-start">
+        <p class="footer-bottom mb-0">
+          &copy; 2025 AI-Powered Secure Cloud Access Monitoring System &mdash; Final Year Engineering Project
+        </p>
+      </div>
+      <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
+        <span class="footer-bottom">
+          <i class="bi bi-shield-fill-check me-1" style="color:var(--green);"></i>
+          Built with <i class="bi bi-heart-fill mx-1" style="color:var(--red);"></i>
+          using Flask &amp; AI/ML
+        </span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ═══════════════════════ GLOBAL SCRIPTS ═══════════════════════ -->
+<script>
+(function(){
+  // --- Navbar scroll effect ---
+  const navbar = document.getElementById('mainNavbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  // --- Cyber Background: Particles + Network ---
+  const pCanvas = document.getElementById('particlesCanvas');
+  const nCanvas = document.getElementById('networkCanvas');
+  if (!pCanvas || !nCanvas) return;
+
+  function resizeCanvases() {
+    [pCanvas, nCanvas].forEach(c => {
+      c.width  = window.innerWidth;
+      c.height = window.innerHeight;
+    });
+  }
+  resizeCanvases();
+  window.addEventListener('resize', resizeCanvases, { passive: true });
+
+  const pCtx = pCanvas.getContext('2d');
+  const nCtx = nCanvas.getContext('2d');
+
+  // Particles
+  const PARTICLE_COUNT = 80;
+  const particles = [];
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push({
+      x:  Math.random() * window.innerWidth,
+      y:  Math.random() * window.innerHeight,
+      r:  Math.random() * 2.5 + 0.5,
+      vx: (Math.random() - .5) * .5,
+      vy: (Math.random() - .5) * .5,
+      a:  Math.random(),
+      da: (Math.random() - .5) * .008
+    });
+  }
+
+  function animateParticles() {
+    pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+    nCtx.clearRect(0, 0, nCanvas.width, nCanvas.height);
+
+    particles.forEach(p => {
+      // move
+      p.x += p.vx; p.y += p.vy; p.a += p.da;
+      if (p.x < 0) p.x = pCanvas.width;
+      if (p.x > pCanvas.width) p.x = 0;
+      if (p.y < 0) p.y = pCanvas.height;
+      if (p.y > pCanvas.height) p.y = 0;
+      if (p.a <= 0 || p.a >= 1) p.da *= -1;
+
+      // draw particle
+      pCtx.beginPath();
+      pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      pCtx.fillStyle = `rgba(56,189,248,${p.a * .6})`;
+      pCtx.fill();
+    });
+
+    // draw network lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+          const alpha = (1 - dist / 150) * .18;
+          nCtx.beginPath();
+          nCtx.moveTo(particles[i].x, particles[i].y);
+          nCtx.lineTo(particles[j].x, particles[j].y);
+          nCtx.strokeStyle = `rgba(56,189,248,${alpha})`;
+          nCtx.lineWidth = .5;
+          nCtx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  // --- Scroll reveal ---
+  const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  if (revealEls.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: .12 });
+    revealEls.forEach(el => observer.observe(el));
+  }
+})();
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

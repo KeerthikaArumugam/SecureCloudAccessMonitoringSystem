@@ -1,0 +1,21 @@
+# Virtual Environment
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Kiro
+.kiro/
+
+# Database
+database.db
+
+# Environment Variables
+.env
+
+# Jupyter
+.ipynb_checkpoints/

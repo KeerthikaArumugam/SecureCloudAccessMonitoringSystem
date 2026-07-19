@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — AI-Powered Secure Cloud Access Monitoring System</title>
+  <meta name="description" content="Create your account on the AI-Powered Cloud Access Monitoring System">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Cyber Background -->
+<div class="cyber-bg">
+  <div class="bg-grid"></div>
+  <div class="bg-radial" style="background:radial-gradient(ellipse 80% 60% at 50% 40%, rgba(16,185,129,.12) 0%, transparent 70%);"></div>
+  <canvas id="particlesCanvas"></canvas>
+  <canvas id="networkCanvas"></canvas>
+  <div class="bg-gradient-overlay"></div>
+</div>
+
+<!-- Floating decorative icons -->
+<div aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:0;">
+  <i class="bi bi-person-fill-add float-anim" style="position:absolute;top:10%;left:5%;font-size:2.5rem;color:rgba(16,185,129,.07);animation-duration:5s;"></i>
+  <i class="bi bi-shield-lock float-anim" style="position:absolute;top:20%;right:7%;font-size:2rem;color:rgba(56,189,248,.07);animation-duration:4s;animation-delay:.5s;"></i>
+  <i class="bi bi-key-fill float-anim" style="position:absolute;bottom:15%;left:8%;font-size:2rem;color:rgba(245,158,11,.06);animation-duration:5.5s;animation-delay:1s;"></i>
+  <i class="bi bi-cloud-arrow-up-fill float-anim" style="position:absolute;bottom:20%;right:5%;font-size:2rem;color:rgba(56,189,248,.06);animation-duration:4.5s;animation-delay:.3s;"></i>
+</div>
+
+<main class="auth-page" role="main">
+  <div style="position:relative;z-index:2;width:100%;max-width:520px;padding:0 16px;">
+
+    <div class="text-center mb-3">
+      <a href="{{ url_for('home') }}" class="text-gray" style="font-size:.85rem;text-decoration:none;">
+        <i class="bi bi-arrow-left me-1"></i>Back to Home
+      </a>
+    </div>
+
+    <div class="auth-card">
+      <!-- Icon -->
+      <div class="auth-icon-wrap" style="background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(56,189,248,.2));border-color:rgba(16,185,129,.35);color:var(--green);">
+        <i class="bi bi-person-plus-fill"></i>
+      </div>
+
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join the AI-Powered Secure Cloud Monitoring System</p>
+
+      <!-- Flask Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} mb-3 py-2" role="alert" style="border-radius:10px;font-size:.85rem;">
+              <i class="bi bi-{{ 'exclamation-triangle-fill' if category == 'error' else 'check-circle-fill' }} me-2"></i>{{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form id="registerForm" method="POST" action="{{ url_for('register') }}" novalidate>
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <!-- Username -->
+        <div class="cyber-input-wrap">
+          <label class="field-label" for="username">Username</label>
+          <i class="bi bi-person-fill input-icon"></i>
+          <input type="text" id="username" name="username" class="cyber-input"
+                 placeholder="Choose a username"
+                 autocomplete="username"
+                 minlength="3" maxlength="30" required
+                 value="{{ request.form.get('username', '') }}">
+          <div class="field-error" id="usernameError"></div>
+        </div>
+
+        <!-- Email -->
+        <div class="cyber-input-wrap">
+          <label class="field-label" for="email">Email Address</label>
+          <i class="bi bi-envelope-fill input-icon"></i>
+          <input type="email" id="email" name="email" class="cyber-input"
+                 placeholder="Enter your email address"
+                 autocomplete="email" required
+                 value="{{ request.form.get('email', '') }}">
+          <div class="field-error" id="emailError"></div>
+        </div>
+
+        <!-- Password -->
+        <div class="cyber-input-wrap">
+          <label class="field-label" for="password">Password</label>
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input type="password" id="password" name="password" class="cyber-input"
+                 placeholder="Create a strong password"
+                 autocomplete="new-password"
+                 minlength="8" required>
+          <button type="button" class="input-icon-right" id="togglePassword" aria-label="Toggle password visibility">
+            <i class="bi bi-eye-fill" id="togglePasswordIcon"></i>
+          </button>
+          <!-- Strength meter -->
+          <div class="strength-bar-wrap mt-2"><div class="strength-bar" id="strengthBar"></div></div>
+          <div class="d-flex justify-content-between align-items-center mt-1">
+            <span class="strength-label" id="strengthLabel" style="color:var(--gray);">Enter a password</span>
+            <span style="font-size:.72rem;color:var(--gray);">Min. 8 characters</span>
+          </div>
+          <div class="field-error" id="passwordError"></div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="cyber-input-wrap">
+          <label class="field-label" for="confirmPassword">Confirm Password</label>
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input type="password" id="confirmPassword" name="confirm_password" class="cyber-input"
+                 placeholder="Repeat your password"
+                 autocomplete="new-password" required>
+          <button type="button" class="input-icon-right" id="toggleConfirm" aria-label="Toggle confirm password visibility">
+            <i class="bi bi-eye-fill" id="toggleConfirmIcon"></i>
+          </button>
+          <div class="field-error" id="confirmError"></div>
+        </div>
+
+        <!-- Terms -->
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required
+                 style="background-color:transparent;border-color:rgba(56,189,248,.4);">
+          <label class="form-check-label" for="agreeTerms" style="font-size:.83rem;color:var(--gray);">
+            I agree to the <a href="#" style="color:var(--cyan);">Terms of Service</a> and <a href="#" style="color:var(--cyan);">Privacy Policy</a>
+          </label>
+          <div class="field-error" id="termsError"></div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-cyber w-100 py-3 d-flex align-items-center justify-content-center gap-2" id="registerBtn"
+                style="background:linear-gradient(135deg,var(--green) 0%,var(--cyan) 100%);box-shadow:0 4px 20px rgba(16,185,129,.35);">
+          <div class="btn-spinner" id="regSpinner" role="status" aria-label="Loading"></div>
+          <i class="bi bi-person-check-fill" id="regIcon"></i>
+          <span id="regBtnText">Create Account</span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="d-flex align-items-center gap-3 my-4">
+        <div style="flex:1;height:1px;background:rgba(56,189,248,.15);"></div>
+        <span style="color:var(--gray);font-size:.78rem;">SECURE REGISTRATION</span>
+        <div style="flex:1;height:1px;background:rgba(56,189,248,.15);"></div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-4 mb-4" style="font-size:.78rem;color:var(--gray);">
+        <span><i class="bi bi-shield-fill-check me-1" style="color:var(--green);"></i>Encrypted</span>
+        <span><i class="bi bi-lock-fill me-1" style="color:var(--cyan);"></i>Private</span>
+        <span><i class="bi bi-cpu-fill me-1" style="color:var(--cyan);"></i>AI Protected</span>
+      </div>
+
+      <p class="auth-footer-link">
+        Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
+      </p>
+    </div><!-- /auth-card -->
+
+    <div class="text-center mt-3">
+      <span style="font-size:.75rem;color:var(--gray);">
+        <i class="bi bi-circle-fill me-1" style="color:var(--green);font-size:.5rem;"></i>All Systems Operational
+      </span>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+  // ---- Background ----
+  const pC = document.getElementById('particlesCanvas');
+  const nC = document.getElementById('networkCanvas');
+  function resize() { [pC,nC].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;}); }
+  resize(); window.addEventListener('resize',resize,{passive:true});
+  const pX=pC.getContext('2d'), nX=nC.getContext('2d');
+  const pts=Array.from({length:60},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*2+.5,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,a:Math.random(),da:(Math.random()-.5)*.007}));
+  function draw(){
+    pX.clearRect(0,0,pC.width,pC.height); nX.clearRect(0,0,nC.width,nC.height);
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.a+=p.da;
+      if(p.x<0)p.x=pC.width;if(p.x>pC.width)p.x=0;if(p.y<0)p.y=pC.height;if(p.y>pC.height)p.y=0;if(p.a<=0||p.a>=1)p.da*=-1;
+      pX.beginPath();pX.arc(p.x,p.y,p.r,0,Math.PI*2);pX.fillStyle=`rgba(16,185,129,${p.a*.4})`;pX.fill();});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<140){nX.beginPath();nX.moveTo(pts[i].x,pts[i].y);nX.lineTo(pts[j].x,pts[j].y);nX.strokeStyle=`rgba(56,189,248,${(1-d/140)*.12})`;nX.lineWidth=.5;nX.stroke();}}
+    requestAnimationFrame(draw);}
+  draw();
+
+  // ---- Password toggles ----
+  function makeToggle(btnId, inputId, iconId) {
+    document.getElementById(btnId).addEventListener('click', () => {
+      const inp = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      icon.className = show ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+    });
+  }
+  makeToggle('togglePassword', 'password', 'togglePasswordIcon');
+  makeToggle('toggleConfirm',  'confirmPassword', 'toggleConfirmIcon');
+
+  // ---- Strength meter ----
+  const pwInput  = document.getElementById('password');
+  const sBar     = document.getElementById('strengthBar');
+  const sLabel   = document.getElementById('strengthLabel');
+  function checkStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+  pwInput.addEventListener('input', () => {
+    const pw = pwInput.value;
+    if (!pw) { sBar.style.width='0%'; sLabel.textContent='Enter a password'; sLabel.style.color='var(--gray)'; return; }
+    const s = checkStrength(pw);
+    const levels = [
+      { w:'20%', color:'var(--red)',    label:'Weak'   },
+      { w:'40%', color:'var(--orange)', label:'Fair'   },
+      { w:'60%', color:'var(--orange)', label:'Fair'   },
+      { w:'80%', color:'#EAB308',       label:'Good'   },
+      { w:'100%',color:'var(--green)',  label:'Strong' }
+    ];
+    const lv = levels[Math.min(s, levels.length) - 1] || levels[0];
+    sBar.style.width = lv.w; sBar.style.background = lv.color;
+    sLabel.textContent = lv.label; sLabel.style.color = lv.color;
+  });
+
+  // ---- Validation ----
+  const form  = document.getElementById('registerForm');
+  const uIn   = document.getElementById('username');
+  const eIn   = document.getElementById('email');
+  const cIn   = document.getElementById('confirmPassword');
+  const terms = document.getElementById('agreeTerms');
+
+  function setErr(id, msg) {
+    const el = document.getElementById(id);
+    el.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i>${msg}`;
+    el.classList.add('show');
+  }
+  function clrErr(id) { document.getElementById(id).classList.remove('show'); }
+
+  cIn.addEventListener('blur', () => {
+    if (cIn.value && cIn.value !== pwInput.value) { setErr('confirmError','Passwords do not match.'); cIn.classList.add('is-invalid'); }
+    else { clrErr('confirmError'); cIn.classList.remove('is-invalid'); if(cIn.value) cIn.classList.add('is-valid'); }
+  });
+
+  form.addEventListener('submit', (e) => {
+    let valid = true;
+    // Username
+    if (!uIn.value.trim() || uIn.value.trim().length < 3) {
+      setErr('usernameError', 'Username must be at least 3 characters.'); uIn.classList.add('is-invalid'); valid = false;
+    } else { clrErr('usernameError'); uIn.classList.remove('is-invalid'); uIn.classList.add('is-valid'); }
+    // Email
+    if (!eIn.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eIn.value)) {
+      setErr('emailError', 'Enter a valid email address.'); eIn.classList.add('is-invalid'); valid = false;
+    } else { clrErr('emailError'); eIn.classList.remove('is-invalid'); eIn.classList.add('is-valid'); }
+    // Password
+    if (!pwInput.value || pwInput.value.length < 8) {
+      setErr('passwordError', 'Password must be at least 8 characters.'); pwInput.classList.add('is-invalid'); valid = false;
+    } else { clrErr('passwordError'); pwInput.classList.remove('is-invalid'); pwInput.classList.add('is-valid'); }
+    // Confirm
+    if (cIn.value !== pwInput.value) {
+      setErr('confirmError', 'Passwords do not match.'); cIn.classList.add('is-invalid'); valid = false;
+    } else { clrErr('confirmError'); cIn.classList.remove('is-invalid'); if(cIn.value) cIn.classList.add('is-valid'); }
+    // Terms
+    if (!terms.checked) {
+      setErr('termsError', 'You must agree to the Terms of Service.'); valid = false;
+    } else { clrErr('termsError'); }
+
+    if (!valid) { e.preventDefault(); return; }
+    // Spinner
+    const btn = document.getElementById('registerBtn');
+    document.getElementById('regSpinner').style.display = 'block';
+    document.getElementById('regIcon').style.display = 'none';
+    document.getElementById('regBtnText').textContent = 'Creating Account…';
+    btn.disabled = true;
+  });
+})();
+</script>
+</body>
+</html>
