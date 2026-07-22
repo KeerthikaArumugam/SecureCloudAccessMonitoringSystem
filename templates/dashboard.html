@@ -329,61 +329,41 @@
                       <td>
                         <div class="d-flex align-items-center gap-2">
                           <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;">
-                            {{ login.username[0] | upper if login.username else '?' }}
+                            {{ login["username"][0] | upper if login["username"] else '?' }}
                           </div>
-                          <span style="color:var(--white);font-size:.83rem;">{{ login.username }}</span>
+                          <span style="color:var(--white);font-size:.83rem;">{{ login["username"] }}</span>
                         </div>
                       </td>
-                      <td style="font-family:monospace;font-size:.8rem;color:var(--cyan);">{{ login.ip_address }}</td>
-                      <td><i class="bi bi-{{ 'phone' if 'mobile' in login.device | lower else 'laptop' }} me-1" style="color:var(--gray);"></i>{{ login.device }}</td>
-                      <td><i class="bi bi-globe me-1" style="color:var(--gray);"></i>{{ login.browser }}</td>
+                      <td style="font-family:monospace;font-size:.8rem;color:var(--cyan);">{{ login["ip_address"] }}</td>
                       <td>
-                        <span class="status-badge {{ 'status-success' if login.status == 'success' else ('status-failed' if login.status == 'failed' else 'status-warning') }}">
-                          <i class="bi bi-{{ 'check-circle-fill' if login.status == 'success' else ('x-circle-fill' if login.status == 'failed' else 'exclamation-circle-fill') }} me-1"></i>
-                          {{ login.status | capitalize }}
-                        </span>
+                          <i class="bi bi-{{ 'phone' if 'mobile' in (login['device']|lower) else 'laptop' }} me-1"
+                            style="color:var(--gray);"></i>
+                          {{ login["device"] }}
                       </td>
-                      <td style="color:var(--gray);white-space:nowrap;font-size:.78rem;">{{ login.timestamp }}</td>
+                      <td><i class="bi bi-globe me-1" style="color:var(--gray);"></i>{{ login["browser"] }}</td>
+                      <td>
+                          {% if login["prediction"] == "Normal Login" %}
+                              <span class="status-badge status-success">
+                                  <i class="bi bi-check-circle-fill me-1"></i>
+                                  Normal
+                              </span>
+                          {% else %}
+                              <span class="status-badge status-failed">
+                                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                  Suspicious
+                              </span>
+                          {% endif %}
+                      </td>
+                      <td style="color:var(--gray);white-space:nowrap;font-size:.78rem;">{{ login["login_time"] }}</td>
                     </tr>
                     {% endfor %}
-                  {% else %}
-                    <!-- Demo data for preview when no Flask data -->
-                    {% set demo = [
-                      ('admin',    '192.168.1.1',   'Desktop', 'Chrome',  'success', '2 min ago'),
-                      ('keerthi',  '203.45.67.89',  'Mobile',  'Safari',  'success', '5 min ago'),
-                      ('user_003', '185.220.101.4', 'Laptop',  'Firefox', 'failed',  '8 min ago'),
-                      ('analyst1', '10.0.0.25',     'Desktop', 'Edge',    'success', '12 min ago'),
-                      ('unknown',  '45.142.212.55', 'Unknown', 'Unknown', 'failed',  '15 min ago'),
-                      ('devops1',  '172.16.0.10',   'Desktop', 'Chrome',  'success', '18 min ago'),
-                      ('qa_team',  '192.168.2.50',  'Laptop',  'Firefox', 'warning', '22 min ago'),
-                      ('admin',    '198.51.100.42', 'Mobile',  'Chrome',  'failed',  '28 min ago'),
-                      ('intern01', '10.0.0.105',    'Desktop', 'Edge',    'success', '35 min ago'),
-                      ('sysadmin', '203.0.113.99',  'Desktop', 'Chrome',  'success', '42 min ago')
-                    ] %}
-                    {% for u, ip, dev, br, st, ts in demo %}
+                    {% else %}
                     <tr>
-                      <td style="color:var(--gray);">{{ loop.index }}</td>
-                      <td>
-                        <div class="d-flex align-items-center gap-2">
-                          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;">
-                            {{ u[0] | upper }}
-                          </div>
-                          <span style="color:var(--white);font-size:.83rem;">{{ u }}</span>
-                        </div>
-                      </td>
-                      <td style="font-family:monospace;font-size:.8rem;color:var(--cyan);">{{ ip }}</td>
-                      <td style="font-size:.83rem;"><i class="bi bi-{{ 'phone' if 'mobile' in dev | lower else 'laptop' }} me-1" style="color:var(--gray);"></i>{{ dev }}</td>
-                      <td style="font-size:.83rem;"><i class="bi bi-globe me-1" style="color:var(--gray);"></i>{{ br }}</td>
-                      <td>
-                        <span class="status-badge {{ 'status-success' if st == 'success' else ('status-failed' if st == 'failed' else 'status-warning') }}">
-                          <i class="bi bi-{{ 'check-circle-fill' if st == 'success' else ('x-circle-fill' if st == 'failed' else 'exclamation-circle-fill') }} me-1"></i>
-                          {{ st | capitalize }}
-                        </span>
-                      </td>
-                      <td style="color:var(--gray);white-space:nowrap;font-size:.78rem;">{{ ts }}</td>
+                        <td colspan="7" style="text-align:center;">
+                            No login records found.
+                        </td>
                     </tr>
-                    {% endfor %}
-                  {% endif %}
+                    {% endif %}
                 </tbody>
               </table>
             </div>
