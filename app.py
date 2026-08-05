@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request
 from user_agents import parse
 import joblib
@@ -25,7 +26,79 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
-        if username and password:
+        # Connect to database
+        conn = sqlite3.connect("database.db", timeout=10)
+        cursor = conn.cursor()
+
+        # Find user by username
+        cursor.execute("""
+        SELECT id, username, password, failed_attempts, account_locked
+        FROM users
+        WHERE username=?
+        """, (username,))
+
+        user = cursor.fetchone()
+
+        # User exists
+        if user:
+
+            user_id = user[0]
+            db_username = user[1]
+            db_password = user[2]
+            failed_attempts = user[3]
+            account_locked = user[4]
+
+            # Account already locked
+            if account_locked == 1:
+                conn.close()
+                flash("Your account is locked. Contact the administrator.", "error")
+                return render_template("login.html")
+
+            # Wrong password
+            if not check_password_hash(db_password, password):
+
+                failed_attempts += 1
+
+                if failed_attempts >= 3:
+
+                    cursor.execute("""
+                    UPDATE users
+                    SET failed_attempts=?, account_locked=1
+                    WHERE id=?
+                    """, (failed_attempts, user_id))
+
+                    conn.commit()
+                    conn.close()
+
+                    flash("Account locked after 3 failed login attempts.", "error")
+                    return render_template("login.html")
+
+                else:
+
+                    cursor.execute("""
+                    UPDATE users
+                    SET failed_attempts=?
+                    WHERE id=?
+                    """, (failed_attempts, user_id))
+
+                    conn.commit()
+                    conn.close()
+
+                    flash(
+                        f"Invalid password. {3-failed_attempts} attempt(s) remaining.",
+                        "error"
+                    )
+                    return render_template("login.html")
+
+            # Correct password
+            cursor.execute("""
+            UPDATE users
+            SET failed_attempts=0,
+                account_locked=0
+            WHERE id=?
+            """, (user_id,))
+
+            conn.commit()
 
             session["username"] = username
 
@@ -36,7 +109,6 @@ def login():
             user_agent = parse(request.headers.get("User-Agent"))
 
             browser = user_agent.browser.family
-
             device = user_agent.os.family
 
             hour = now.hour
@@ -45,14 +117,13 @@ def login():
             weekday = now.weekday()
 
             # Temporary encoded values
-            # (Later these will come from the database)
-            user_id = random.randint(0, 800)
+            user_code = random.randint(0, 800)
             pc_id = random.randint(0, 700)
             activity = 1
 
             # AI Prediction
             prediction = predict_login(
-                user=user_id,
+                user=user_code,
                 pc=pc_id,
                 activity=activity,
                 hour=hour,
@@ -60,10 +131,6 @@ def login():
                 month=month,
                 weekday=weekday
             )
-
-            # Connect to database
-            conn = sqlite3.connect("database.db")
-            cursor = conn.cursor()
 
             # Save login details
             cursor.execute("""
@@ -89,9 +156,14 @@ def login():
 
             flash(f"Welcome back, {username}!", "success")
 
-            return redirect(url_for("dashboard"))
+            if username == "admin":
+                return redirect(url_for("admin"))
+            else:
+                return redirect(url_for("dashboard"))
 
-        flash("Invalid username or password.", "error")
+        else:
+            conn.close()
+            flash("Invalid username or password.", "error")
 
     return render_template("login.html")
 
@@ -106,21 +178,43 @@ def register():
         password = request.form.get("password", "")
 
         if username and email and password:
-            import sqlite3
 
             conn = sqlite3.connect("database.db")
             cursor = conn.cursor()
 
-            cursor.execute("""
-            INSERT INTO users (username, email, password)
-            VALUES (?, ?, ?)
-            """, (
-                username,
-                email,
-                password
-            ))
+            # Check if username already exists
+            cursor.execute(
+                "SELECT * FROM users WHERE username=?",
+                (username,)
+            )
 
-            conn.commit()
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                conn.close()
+                flash("Username already exists.", "error")
+                return render_template("register.html")
+
+            # Hash the password
+            hashed_password = generate_password_hash(password)
+
+            try:
+                cursor.execute("""
+                INSERT INTO users (username, email, password)
+                VALUES (?, ?, ?)
+                """, (
+                    username,
+                    email,
+                    hashed_password
+                ))
+
+                conn.commit()
+
+            except sqlite3.IntegrityError:
+                conn.close()
+                flash("Email already registered.", "error")
+                return render_template("register.html")
+
             conn.close()
 
             session["username"] = username
@@ -136,8 +230,13 @@ def register():
 
 @app.route("/dashboard")
 def dashboard():
+    # User must be logged in
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
 
-    username = session.get("username", "Admin")
+
+    username = session.get("username")
     prediction = session.get("prediction")
 
     import sqlite3
@@ -216,7 +315,85 @@ def dashboard():
         confidence=95 if prediction and prediction["risk"] == "HIGH" else 97,
         prediction_reasons=prediction["reasons"] if prediction else ["No suspicious behaviour detected"]
     )
+@app.route("/admin")
+def admin():
 
+    # User must be logged in
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
+
+    # Only admin can access
+    if session["username"] != "admin":
+        flash("Access Denied!", "error")
+        return redirect(url_for("dashboard"))
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Total users
+    cursor.execute("SELECT COUNT(*) FROM users")
+    total_users = cursor.fetchone()[0]
+
+    # Total logins
+    cursor.execute("SELECT COUNT(*) FROM login_logs")
+    total_logins = cursor.fetchone()[0]
+
+    # High risk logins
+    cursor.execute("SELECT COUNT(*) FROM login_logs WHERE risk='HIGH'")
+    high_risk = cursor.fetchone()[0]
+    # Locked accounts
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM users
+    WHERE account_locked = 1
+    """)
+
+    locked_accounts = cursor.fetchone()[0]
+
+    # Registered users
+    cursor.execute("""
+        SELECT id, username, email, failed_attempts, account_locked
+        FROM users
+        ORDER BY id DESC
+    """)
+
+    users = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin.html",
+        total_users=total_users,
+        total_logins=total_logins,
+        high_risk=high_risk,
+        locked_accounts=locked_accounts,
+        users=users
+    )
+@app.route("/unlock/<int:user_id>")
+def unlock_user(user_id):
+
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE users
+    SET failed_attempts = 0,
+        account_locked = 0
+    WHERE id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("User account unlocked successfully.", "success")
+
+    return redirect(url_for("admin"))
 @app.route("/logout")
 def logout():
 

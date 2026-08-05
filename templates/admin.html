@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">
+            Logout
+        </a>
+    </div>
+
+    <h2>Admin Dashboard</h2>
+    <hr>
+
+    <div class="row">
+
+        <!-- Total Users -->
+        <div class="col-md-3">
+            <div class="card p-3 shadow text-center">
+                <h5>Total Users</h5>
+                <h2>{{ total_users }}</h2>
+            </div>
+        </div>
+
+        <!-- Total Logins -->
+        <div class="col-md-3">
+            <div class="card p-3 shadow text-center">
+                <h5>Total Logins</h5>
+                <h2>{{ total_logins }}</h2>
+            </div>
+        </div>
+
+        <!-- High Risk -->
+        <div class="col-md-3">
+            <div class="card p-3 shadow text-center">
+                <h5>High Risk Logins</h5>
+                <h2>{{ high_risk }}</h2>
+            </div>
+        </div>
+
+        <!-- Locked Accounts -->
+        <div class="col-md-3">
+            <div class="card p-3 shadow text-center">
+                <h5>Locked Accounts</h5>
+                <h2>{{ locked_accounts }}</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <br><br>
+
+    <h3>Registered Users</h3>
+
+    <table class="table table-bordered table-striped">
+
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Failed Attempts</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for user in users %}
+
+        <tr>
+
+            <td>{{ user["id"] }}</td>
+
+            <td>{{ user["username"] }}</td>
+
+            <td>{{ user["email"] }}</td>
+
+            <td>{{ user["failed_attempts"] }}</td>
+
+            <td>
+
+                {% if user["account_locked"] == 1 %}
+
+                    <span class="badge bg-danger">
+                        Locked
+                    </span>
+
+                {% else %}
+
+                    <span class="badge bg-success">
+                        Active
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                {% if user["account_locked"] == 1 %}
+
+                <a href="{{ url_for('unlock_user', user_id=user['id']) }}"
+                   class="btn btn-success btn-sm">
+
+                    Unlock
+
+                </a>
+
+                {% else %}
+
+                <button class="btn btn-secondary btn-sm" disabled>
+
+                    Active
+
+                </button>
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}
