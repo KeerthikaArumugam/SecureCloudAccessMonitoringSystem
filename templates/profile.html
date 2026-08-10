@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Profile - Secure Cloud</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #07111f;
+            color: #e2e8f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .topbar {
+            height: 70px;
+            border-bottom: 1px solid rgba(56,189,248,.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            background: #081525;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: #12304c;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38bdf8;
+            font-size: 22px;
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: #38bdf8;
+        }
+
+        .container-main {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .profile-card {
+            background: #111e2f;
+            border: 1px solid rgba(56,189,248,.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            margin-bottom: 25px;
+        }
+
+        .avatar {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: linear-gradient(135deg,#2563eb,#38bdf8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .username {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .role {
+            color: #38bdf8;
+            font-size: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(16,185,129,.12);
+            color: #10b981;
+            font-size: 12px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .info-box {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        @media(max-width:700px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <div class="brand">
+        <div class="brand-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+
+        <div>
+            <div class="brand-title">Secure Cloud</div>
+            <div class="brand-subtitle">AI Monitoring System</div>
+        </div>
+    </div>
+
+    <a href="{{ url_for('dashboard') }}" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+        Back to Dashboard
+    </a>
+
+</div>
+
+
+<div class="container-main">
+
+    <div class="page-title">
+        <i class="bi bi-person-circle" style="color:#38bdf8;"></i>
+        My Profile
+    </div>
+
+    <div class="page-subtitle">
+        View your account and security information
+    </div>
+
+
+    <div class="profile-card">
+
+        <div class="profile-header">
+
+            <div class="avatar">
+                {{ user["username"][0] | upper }}
+            </div>
+
+            <div>
+                <div class="username">
+                    {{ user["username"] }}
+                </div>
+
+                <div class="role">
+                    <i class="bi bi-shield-check"></i>
+                    Secure Cloud User
+                </div>
+
+                <span class="status">
+                    <i class="bi bi-circle-fill"></i>
+                    Account Active
+                </span>
+            </div>
+
+        </div>
+
+
+        <div class="info-grid">
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-person"></i>
+                    Username
+                </div>
+
+                <div class="info-value">
+                    {{ user["username"] }}
+                </div>
+            </div>
+
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-envelope"></i>
+                    Email
+                </div>
+
+                <div class="info-value">
+                    {{ user["email"] }}
+                </div>
+            </div>
+
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-fingerprint"></i>
+                    User Code
+                </div>
+
+                <div class="info-value">
+                    {{ user["user_code"] }}
+                </div>
+            </div>
+
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-pc-display"></i>
+                    Trusted Device
+                </div>
+
+                <div class="info-value">
+                    Device {{ user["trusted_device"] }}
+                </div>
+            </div>
+
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-shield-check"></i>
+                    Account Status
+                </div>
+
+                <div class="info-value">
+                    {% if user["account_locked"] == 1 %}
+                        <span style="color:#ef4444;">Locked</span>
+                    {% else %}
+                        <span style="color:#10b981;">Active</span>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <div class="info-box">
+                <div class="info-label">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Failed Login Attempts
+                </div>
+
+                <div class="info-value">
+                    {{ user["failed_attempts"] }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

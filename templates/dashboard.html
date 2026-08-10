@@ -69,13 +69,14 @@
 
       <span class="sidebar-section-label">Account</span>
 
-      <a href="#profile"   class="sidebar-item" data-section="profile">
-        <i class="bi bi-person-circle"></i>
-        <span>Profile</span>
+      <a href="{{ url_for('profile') }}" class="sidebar-item">
+          <i class="bi bi-person-circle"></i>
+          <span>Profile</span>
       </a>
-      <a href="#settings"  class="sidebar-item" data-section="settings">
-        <i class="bi bi-gear-fill"></i>
-        <span>Settings</span>
+
+      <a href="{{ url_for('settings') }}" class="sidebar-item">
+          <i class="bi bi-gear-fill"></i>
+          <span>Settings</span>
       </a>
     </nav>
 
@@ -238,7 +239,7 @@
                 <div style="position:relative;width:140px;height:140px;margin:0 auto 16px;">
                   <canvas id="gaugeCanvas" width="140" height="140"></canvas>
                   <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                    <span style="font-size:2rem;font-weight:800;color:var(--white);" id="threatScore">{{ confidence | default(23) }}</span>
+                    <span style="font-size:2rem;font-weight:800;color:var(--white);" id="threatScore">{{ threat_score }}</span>
                     <span style="font-size:.7rem;color:var(--gray);">Threat Score</span>
                   </div>
                 </div>
@@ -702,7 +703,7 @@
   const gaugeCanvas = document.getElementById('gaugeCanvas');
   if (gaugeCanvas) {
     const gCtx = gaugeCanvas.getContext('2d');
-    const score = {{ confidence | default(23) }};
+    const score = {{ threat_score | default(22) }};
     function drawGauge(val) {
       gCtx.clearRect(0, 0, 140, 140);
       // Track

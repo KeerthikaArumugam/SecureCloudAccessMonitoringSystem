@@ -32,10 +32,18 @@ def login():
 
         # Find user by username
         cursor.execute("""
-        SELECT id, username, password, failed_attempts, account_locked
+        SELECT
+            id,
+            username,
+            password,
+            failed_attempts,
+            account_locked,
+            user_code,
+            trusted_device
         FROM users
         WHERE username=?
         """, (username,))
+
 
         user = cursor.fetchone()
 
@@ -47,7 +55,8 @@ def login():
             db_password = user[2]
             failed_attempts = user[3]
             account_locked = user[4]
-
+            user_code = user[5]
+            pc_id = user[6]
             # Account already locked
             if account_locked == 1:
                 conn.close()
@@ -117,9 +126,18 @@ def login():
             weekday = now.weekday()
 
             # Temporary encoded values
-            user_code = random.randint(0, 800)
-            pc_id = random.randint(0, 700)
-            activity = 1
+            if username == "admin":
+                activity = 5
+            elif username == "Arun":
+                activity = 3
+            elif username == "Ramya":
+                activity = 2
+            elif username == "Harini":
+                activity = 4
+            else:
+                activity = 1
+
+            pc_id = user[6]
 
             # AI Prediction
             prediction = predict_login(
@@ -131,7 +149,6 @@ def login():
                 month=month,
                 weekday=weekday
             )
-
             # Save login details
             cursor.execute("""
             INSERT INTO login_logs
@@ -295,6 +312,19 @@ def dashboard():
             self.username = name
 
     current_user = SimpleUser(username)
+    risk = prediction["risk"] if prediction else "LOW"
+
+    if risk == "HIGH":
+        threat_score = 92
+        confidence = 97
+
+    elif risk == "MEDIUM":
+        threat_score = 60
+        confidence = 93
+
+    else:
+        threat_score = 22
+        confidence = 98
 
     return render_template(
         "dashboard.html",
@@ -312,7 +342,8 @@ def dashboard():
 
         threat_level=prediction["risk"] if prediction else "LOW",
         ai_prediction=prediction["prediction"] if prediction else "Normal Login",
-        confidence=95 if prediction and prediction["risk"] == "HIGH" else 97,
+        confidence=confidence,
+        threat_score=threat_score,
         prediction_reasons=prediction["reasons"] if prediction else ["No suspicious behaviour detected"]
     )
 @app.route("/admin")
@@ -394,6 +425,78 @@ def unlock_user(user_id):
     flash("User account unlocked successfully.", "success")
 
     return redirect(url_for("admin"))
+@app.route("/profile")
+def profile():
+
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            username,
+            email,
+            user_code,
+            trusted_device,
+            failed_attempts,
+            account_locked
+        FROM users
+        WHERE username=?
+    """, (username,))
+
+    user = cursor.fetchone()
+
+    conn.close()
+
+    if not user:
+        flash("User account not found.", "error")
+        return redirect(url_for("login"))
+
+    return render_template(
+        "profile.html",
+        user=user
+    )
+
+@app.route("/settings")
+def settings():
+
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            username,
+            email
+        FROM users
+        WHERE username=?
+    """, (username,))
+
+    user = cursor.fetchone()
+
+    conn.close()
+
+    if not user:
+        flash("User account not found.", "error")
+        return redirect(url_for("login"))
+
+    return render_template(
+        "settings.html",
+        user=user
+    )
 @app.route("/logout")
 def logout():
 
