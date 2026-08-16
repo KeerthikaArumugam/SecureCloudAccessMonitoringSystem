@@ -84,6 +84,15 @@ SET user_code = 6,
     trusted_device = 106
 WHERE username = 'admin'
 """)
+# Add AI enabled column
+try:
+    cursor.execute("""
+        ALTER TABLE users
+        ADD COLUMN ai_enabled INTEGER DEFAULT 1
+    """)
+    print("✓ ai_enabled column added")
+except Exception as e:
+    print("ai_enabled:", e)
 
 conn.commit()
 conn.close()

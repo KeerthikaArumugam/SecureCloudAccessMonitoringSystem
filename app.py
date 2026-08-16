@@ -39,7 +39,8 @@ def login():
             failed_attempts,
             account_locked,
             user_code,
-            trusted_device
+            trusted_device,
+            ai_enabled
         FROM users
         WHERE username=?
         """, (username,))
@@ -57,6 +58,7 @@ def login():
             account_locked = user[4]
             user_code = user[5]
             pc_id = user[6]
+            ai_enabled = user[7]
             # Account already locked
             if account_locked == 1:
                 conn.close()
@@ -138,17 +140,28 @@ def login():
                 activity = 1
 
             pc_id = user[6]
-
             # AI Prediction
-            prediction = predict_login(
-                user=user_code,
-                pc=pc_id,
-                activity=activity,
-                hour=hour,
-                day=day,
-                month=month,
-                weekday=weekday
-            )
+            if ai_enabled == 1:
+
+                prediction = predict_login(
+                    user=user_code,
+                    pc=pc_id,
+                    activity=activity,
+                    hour=hour,
+                    day=day,
+                    month=month,
+                    weekday=weekday
+                )
+
+            else:
+
+                prediction = {
+                    "prediction": "Normal Login",
+                    "risk": "LOW",
+                    "reasons": [
+                        "AI Threat Detection is disabled"
+                    ]
+                }
             # Save login details
             cursor.execute("""
             INSERT INTO login_logs
@@ -252,15 +265,26 @@ def dashboard():
         flash("Please login first.", "error")
         return redirect(url_for("login"))
 
-
     username = session.get("username")
     prediction = session.get("prediction")
-
-    import sqlite3
 
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+
+    # -------------------------
+    # Get current user's AI setting
+    # -------------------------
+
+    cursor.execute("""
+        SELECT ai_enabled
+        FROM users
+        WHERE username=?
+    """, (username,))
+
+    user = cursor.fetchone()
+
+    ai_enabled = user["ai_enabled"] if user else 0
 
     # -------------------------
     # Dashboard Statistics
@@ -270,20 +294,19 @@ def dashboard():
     total_users = cursor.fetchone()[0]
 
     cursor.execute("""
-    SELECT COUNT(*)
-    FROM login_logs
-    WHERE login_date = date('now')
+        SELECT COUNT(*)
+        FROM login_logs
+        WHERE login_date = date('now')
     """)
     today_logins = cursor.fetchone()[0]
 
     cursor.execute("""
-    SELECT COUNT(*)
-    FROM login_logs
-    WHERE risk='HIGH'
+        SELECT COUNT(*)
+        FROM login_logs
+        WHERE risk='HIGH'
     """)
     blocked_attempts = cursor.fetchone()[0]
 
-    # Use the same value
     threat_alerts = blocked_attempts
 
     # -------------------------
@@ -291,40 +314,71 @@ def dashboard():
     # -------------------------
 
     cursor.execute("""
-    SELECT
-        username,
-        ip_address,
-        device,
-        browser,
-        prediction,
-        login_time
-    FROM login_logs
-    ORDER BY id DESC
-    LIMIT 10
+        SELECT
+            username,
+            ip_address,
+            device,
+            browser,
+            prediction,
+            risk,
+            login_time
+        FROM login_logs
+        ORDER BY id DESC
+        LIMIT 10
     """)
 
     recent_logins = cursor.fetchall()
 
     conn.close()
 
+    # -------------------------
+    # User object
+    # -------------------------
+
     class SimpleUser:
         def __init__(self, name):
             self.username = name
 
     current_user = SimpleUser(username)
-    risk = prediction["risk"] if prediction else "LOW"
 
-    if risk == "HIGH":
-        threat_score = 92
-        confidence = 97
+    # -------------------------
+    # AI Prediction
+    # -------------------------
 
-    elif risk == "MEDIUM":
-        threat_score = 60
-        confidence = 93
+    if ai_enabled == 1 and prediction:
+
+        risk = prediction["risk"]
+
+        if risk == "HIGH":
+            threat_score = 92
+            confidence = 97
+
+        elif risk == "MEDIUM":
+            threat_score = 60
+            confidence = 93
+
+        else:
+            threat_score = 22
+            confidence = 98
+
+        threat_level = prediction["risk"]
+        ai_prediction = prediction["prediction"]
+        prediction_reasons = prediction["reasons"]
 
     else:
-        threat_score = 22
-        confidence = 98
+
+        # AI is disabled
+        threat_score = 0
+        confidence = 0
+        threat_level = "DISABLED"
+        ai_prediction = "AI Threat Detection is disabled"
+        prediction_reasons = [
+            "AI Threat Detection is disabled for this account."
+        ]
+
+    # -------------------------
+    # Render Dashboard
+    # -------------------------
 
     return render_template(
         "dashboard.html",
@@ -340,11 +394,13 @@ def dashboard():
 
         recent_logins=recent_logins,
 
-        threat_level=prediction["risk"] if prediction else "LOW",
-        ai_prediction=prediction["prediction"] if prediction else "Normal Login",
+        ai_enabled=ai_enabled,
+
+        threat_level=threat_level,
+        ai_prediction=ai_prediction,
         confidence=confidence,
         threat_score=threat_score,
-        prediction_reasons=prediction["reasons"] if prediction else ["No suspicious behaviour detected"]
+        prediction_reasons=prediction_reasons
     )
 @app.route("/admin")
 def admin():
@@ -463,8 +519,51 @@ def profile():
         "profile.html",
         user=user
     )
+@app.route("/toggle-ai", methods=["POST"])
+def toggle_ai():
 
-@app.route("/settings")
+    # User must be logged in
+    if "username" not in session:
+        flash("Please login first.", "error")
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    # Get current AI setting
+    cursor.execute("""
+        SELECT ai_enabled
+        FROM users
+        WHERE username=?
+    """, (username,))
+
+    user = cursor.fetchone()
+
+    if user:
+        current_status = user[0]
+
+        # Toggle 1 -> 0 or 0 -> 1
+        new_status = 0 if current_status == 1 else 1
+
+        cursor.execute("""
+            UPDATE users
+            SET ai_enabled=?
+            WHERE username=?
+        """, (new_status, username))
+
+        conn.commit()
+
+        if new_status == 1:
+            flash("AI Threat Detection enabled.", "success")
+        else:
+            flash("AI Threat Detection disabled.", "error")
+
+    conn.close()
+
+    return redirect(url_for("settings"))
+@app.route("/settings", methods=["GET", "POST"])
 def settings():
 
     if "username" not in session:
@@ -477,10 +576,35 @@ def settings():
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
+    # Get current AI setting
+    if request.method == "POST":
+
+        if request.form.get("ai_enabled") == "on":
+            ai_enabled = 1
+        else:
+            ai_enabled = 0
+
+        cursor.execute("""
+            UPDATE users
+            SET ai_enabled=?
+            WHERE username=?
+        """, (ai_enabled, username))
+
+        conn.commit()
+
+        flash("AI Threat Detection setting updated.", "success")
+
+    # Get updated user information
     cursor.execute("""
         SELECT
+            id,
             username,
-            email
+            email,
+            user_code,
+            trusted_device,
+            failed_attempts,
+            account_locked,
+            ai_enabled
         FROM users
         WHERE username=?
     """, (username,))
