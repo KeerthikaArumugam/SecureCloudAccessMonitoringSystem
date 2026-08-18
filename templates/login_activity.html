@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Activity — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item active"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Account</span>
+      <a href="{{ url_for('profile') }}" class="sidebar-item"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('settings') }}" class="sidebar-item"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-clock-history me-2" style="color:var(--cyan);"></i>Login Activity</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">{{ session.get('username','U')[0]|upper }}</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">{{ session.get('username') }}</span>
+    </header>
+    <main class="dash-content">
+      <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:700;margin:0;">Login Activity</h2>
+          <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">{{ total_rows }} record(s) total — Page {{ page }} of {{ total_pages }}</p>
+        </div>
+        <!-- Filter + Search -->
+        <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+          <input type="text" name="search_user" value="{{ search_user }}" placeholder="Username..."
+                 style="background:rgba(30,41,59,.7);border:1px solid rgba(56,189,248,.2);color:var(--white);padding:7px 12px;border-radius:8px;font-size:.83rem;width:130px;outline:none;">
+          <input type="text" name="search_ip" value="{{ search_ip }}" placeholder="IP..."
+                 style="background:rgba(30,41,59,.7);border:1px solid rgba(56,189,248,.2);color:var(--white);padding:7px 12px;border-radius:8px;font-size:.83rem;width:130px;outline:none;">
+          <select name="status" style="background:rgba(30,41,59,.7);border:1px solid rgba(56,189,248,.2);color:var(--white);padding:7px 12px;border-radius:8px;font-size:.83rem;">
+            {% for s in ['All','Normal','Suspicious','High Risk'] %}
+              <option value="{{ s }}" {% if s==filter_status %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn-cyber" style="padding:7px 16px;font-size:.83rem;border-radius:8px;">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+          <a href="{{ url_for('login_activity') }}" class="btn-outline-cyber" style="padding:7px 14px;font-size:.83rem;border-radius:8px;">Reset</a>
+        </form>
+      </div>
+
+      <div class="dash-panel">
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead>
+              <tr><th>#</th><th>Username</th><th>Date</th><th>Time</th><th>IP Address</th><th>Device</th><th>Browser</th><th>Prediction</th><th>Risk</th><th>Threat Score</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% if logs %}
+                {% for log in logs %}
+                <tr>
+                  <td style="color:var(--gray);">{{ loop.index + (page-1)*20 }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;">{{ log['username'][0]|upper if log['username'] else '?' }}</div>
+                      <span style="font-size:.83rem;">{{ log['username'] }}</span>
+                    </div>
+                  </td>
+                  <td style="font-size:.78rem;color:var(--gray);">{{ log['login_date'] or '—' }}</td>
+                  <td style="font-size:.78rem;color:var(--gray);">{{ log['login_time'] or '—' }}</td>
+                  <td style="font-family:monospace;font-size:.8rem;color:var(--cyan);">{{ log['ip_address'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ log['device'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ log['browser'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ log['prediction'] or '—' }}</td>
+                  <td>{% if log['risk']=='HIGH' %}<span class="status-badge status-failed">HIGH</span>{% elif log['risk']=='MEDIUM' %}<span class="status-badge status-warning">MEDIUM</span>{% else %}<span class="status-badge status-success">LOW</span>{% endif %}</td>
+                  <td style="font-weight:600;color:{% if (log['threat_score']|float) >= 71 %}var(--red){% elif (log['threat_score']|float) >= 31 %}var(--orange){% else %}var(--green){% endif %};">{{ log['threat_score'] or 0 }}</td>
+                  <td>{% if log['status']=='suspicious' %}<span class="status-badge status-warning">Suspicious</span>{% else %}<span class="status-badge status-success">Normal</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="11" style="text-align:center;padding:30px;color:var(--gray);">No records found.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="d-flex justify-content-center gap-2 p-3 flex-wrap">
+          {% for p in range(1, total_pages+1) %}
+          <a href="{{ url_for('login_activity', page=p, status=filter_status, search_user=search_user, search_ip=search_ip) }}"
+             class="btn-outline-cyber" style="padding:5px 12px;font-size:.8rem;border-radius:6px;{% if p==page %}background:var(--cyan);color:var(--bg-primary);{% endif %}">{{ p }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+</script>
+</body>
+</html>

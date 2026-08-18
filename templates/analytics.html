@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item active"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Account</span>
+      <a href="{{ url_for('profile') }}" class="sidebar-item"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('settings') }}" class="sidebar-item"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-bar-chart-fill me-2" style="color:var(--cyan);"></i>Analytics</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">{{ session.get('username','U')[0]|upper }}</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">{{ session.get('username') }}</span>
+    </header>
+    <main class="dash-content">
+      <div class="mb-4">
+        <h2 style="font-size:1.4rem;font-weight:700;margin:0;">Security Analytics</h2>
+        <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">All charts powered by real database data</p>
+      </div>
+
+      <!-- Row 1 -->
+      <div class="row g-3 mb-4">
+        <div class="col-xl-8">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-graph-up-arrow"></i>Daily Login Count (Last 7 Days)</span></div>
+            <div class="panel-body" style="height:280px;"><canvas id="dailyChart"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-4">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-pie-chart-fill"></i>Risk Distribution</span></div>
+            <div class="panel-body" style="height:280px;display:flex;align-items:center;justify-content:center;"><canvas id="riskChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="row g-3 mb-4">
+        <div class="col-xl-6">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-display"></i>Device Distribution</span></div>
+            <div class="panel-body" style="height:260px;"><canvas id="deviceChart"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-browser-chrome"></i>Browser Distribution</span></div>
+            <div class="panel-body" style="height:260px;display:flex;align-items:center;justify-content:center;"><canvas id="browserChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="row g-3 mb-4">
+        <div class="col-xl-6">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-clock"></i>Login Hour Distribution (0–23)</span></div>
+            <div class="panel-body" style="height:260px;"><canvas id="hourChart"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-graph-up"></i>Suspicious vs Normal (Last 7 Days)</span></div>
+            <div class="panel-body" style="height:260px;"><canvas id="trendChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+
+  Chart.defaults.color='#CBD5E1';
+  Chart.defaults.font.family="'Poppins',sans-serif";
+  Chart.defaults.font.size=11;
+  const grid='rgba(255,255,255,.04)';
+  const tip={backgroundColor:'rgba(15,23,42,.95)',borderColor:'rgba(56,189,248,.3)',borderWidth:1,padding:10,cornerRadius:10};
+
+  const dailyLabels   = JSON.parse('{{ daily_labels | safe }}');
+  const dailyCounts   = JSON.parse('{{ daily_counts | safe }}');
+  const riskData      = JSON.parse('{{ risk_data    | safe }}');
+  const deviceLabels  = JSON.parse('{{ device_labels| safe }}');
+  const deviceCounts  = JSON.parse('{{ device_counts| safe }}');
+  const browserLabels = JSON.parse('{{ browser_labels|safe }}');
+  const browserCounts = JSON.parse('{{ browser_counts|safe }}');
+  const hourCounts    = JSON.parse('{{ hour_counts  | safe }}');
+  const susTrend      = JSON.parse('{{ suspicious_trend|safe }}');
+  const normTrend     = JSON.parse('{{ normal_trend | safe }}');
+
+  new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:dailyLabels,datasets:[{label:'Logins',data:dailyCounts,borderColor:'#38BDF8',backgroundColor:'rgba(56,189,248,.08)',borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#38BDF8',pointRadius:4,pointHoverRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{x:{grid:{color:grid},ticks:{color:'#CBD5E1'}},y:{grid:{color:grid},ticks:{color:'#CBD5E1'},beginAtZero:true}}}});
+
+  new Chart(document.getElementById('riskChart'),{type:'doughnut',data:{labels:['LOW','MEDIUM','HIGH'],datasets:[{data:[riskData.LOW,riskData.MEDIUM,riskData.HIGH],backgroundColor:['rgba(16,185,129,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)'],borderColor:'rgba(7,17,31,.8)',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}},tooltip:tip}}});
+
+  new Chart(document.getElementById('deviceChart'),{type:'bar',data:{labels:deviceLabels.length?deviceLabels:['No data'],datasets:[{label:'Logins',data:deviceCounts.length?deviceCounts:[0],backgroundColor:'rgba(56,189,248,.6)',borderColor:'#38BDF8',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{x:{grid:{color:grid},ticks:{color:'#CBD5E1'}},y:{grid:{color:grid},ticks:{color:'#CBD5E1'},beginAtZero:true}}}});
+
+  new Chart(document.getElementById('browserChart'),{type:'pie',data:{labels:browserLabels.length?browserLabels:['No data'],datasets:[{data:browserCounts.length?browserCounts:[1],backgroundColor:['rgba(37,99,235,.8)','rgba(239,68,68,.8)','rgba(56,189,248,.8)','rgba(16,185,129,.8)','rgba(245,158,11,.8)','rgba(96,165,250,.8)','rgba(249,115,22,.8)','rgba(168,85,247,.8)'],borderColor:'rgba(7,17,31,.8)',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:10,font:{size:10}}},tooltip:tip}}});
+
+  new Chart(document.getElementById('hourChart'),{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{label:'Logins',data:hourCounts,backgroundColor:'rgba(96,165,250,.6)',borderColor:'#60A5FA',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{x:{grid:{color:grid},ticks:{color:'#CBD5E1',maxRotation:0}},y:{grid:{color:grid},ticks:{color:'#CBD5E1'},beginAtZero:true}}}});
+
+  new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:dailyLabels,datasets:[{label:'Normal',data:normTrend,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.06)',borderWidth:2,fill:true,tension:.4,pointRadius:4},{label:'Suspicious',data:susTrend,borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.06)',borderWidth:2,fill:true,tension:.4,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:14}},tooltip:tip},scales:{x:{grid:{color:grid},ticks:{color:'#CBD5E1'}},y:{grid:{color:grid},ticks:{color:'#CBD5E1'},beginAtZero:true}}}});
+</script>
+</body>
+</html>

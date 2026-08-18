@@ -274,36 +274,43 @@
                   <div class="confidence-bar" id="confBar" style="width:0%;"></div>
                 </div>
               </div>
-              <!-- Feature breakdown -->
+              <!-- Feature breakdown — dynamic from feature_scores -->
               <div class="d-flex flex-column gap-2 mt-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span style="font-size:.78rem;color:var(--gray);"><i class="bi bi-geo-alt-fill me-1" style="color:var(--cyan);"></i>Location Risk</span>
+                {% set fs = feature_scores if feature_scores else {} %}
+                {% set dim_icons = {'network': 'geo-alt-fill', 'time': 'clock-fill', 'device': 'device-hdd-fill', 'behaviour': 'activity'} %}
+                {% set dim_labels = {'network': 'Network Risk', 'time': 'Time Anomaly', 'device': 'Device Trust', 'behaviour': 'Behaviour'} %}
+                {% for dim in ['network', 'time', 'device', 'behaviour'] %}
+                  {% set info = fs.get(dim, {}) %}
+                  {% set score = info.get('score', 0)|float %}
+                  {% set lvl = info.get('level', 'LOW') %}
+                  {% set bar_color = 'var(--red)' if lvl=='HIGH' else ('var(--orange)' if lvl=='MEDIUM' else 'var(--green)') %}
+                  {% set txt_color = 'var(--red)' if lvl=='HIGH' else ('var(--orange)' if lvl=='MEDIUM' else 'var(--green)') %}
+                <div class="d-flex justify-content-between align-items-center" title="{{ info.get('reason', '') }}">
+                  <span style="font-size:.78rem;color:var(--gray);">
+                    <i class="bi bi-{{ dim_icons[dim] }} me-1" style="color:var(--cyan);"></i>{{ dim_labels[dim] }}
+                  </span>
                   <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:18%;background:var(--green);border-radius:3px;"></div>
+                    <div style="height:100%;width:{{ [score,100]|min }}%;background:{{ bar_color }};border-radius:3px;"></div>
                   </div>
-                  <span style="font-size:.75rem;color:var(--green);">Low</span>
+                  <span style="font-size:.75rem;color:{{ txt_color }};">{{ lvl|title }}</span>
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span style="font-size:.78rem;color:var(--gray);"><i class="bi bi-clock-fill me-1" style="color:var(--cyan);"></i>Time Anomaly</span>
-                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:35%;background:var(--orange);border-radius:3px;"></div>
+                {% endfor %}
+
+                <!-- Model Version + Composite breakdown -->
+                {% if model_version and model_version != 'disabled' %}
+                <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,.06);">
+                  <div class="d-flex justify-content-between">
+                    <span style="font-size:.72rem;color:var(--gray);">Model Version</span>
+                    <span style="font-size:.72rem;color:var(--cyan);font-weight:600;">{{ model_version }}</span>
                   </div>
-                  <span style="font-size:.75rem;color:var(--orange);">Med</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span style="font-size:.78rem;color:var(--gray);"><i class="bi bi-device-hdd-fill me-1" style="color:var(--cyan);"></i>Device Trust</span>
-                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:72%;background:var(--green);border-radius:3px;"></div>
+                  {% if model_component is defined %}
+                  <div class="d-flex justify-content-between mt-1">
+                    <span style="font-size:.72rem;color:var(--gray);">Time Component</span>
+                    <span style="font-size:.72rem;color:var(--white);">{{ model_component }}%</span>
                   </div>
-                  <span style="font-size:.75rem;color:var(--green);">High</span>
+                  {% endif %}
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span style="font-size:.78rem;color:var(--gray);"><i class="bi bi-activity me-1" style="color:var(--cyan);"></i>Behaviour Score</span>
-                  <div style="width:80px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:88%;background:var(--cyan);border-radius:3px;"></div>
-                  </div>
-                  <span style="font-size:.75rem;color:var(--cyan);">Good</span>
-                </div>
+                {% endif %}
               </div>
               {% else %}
 

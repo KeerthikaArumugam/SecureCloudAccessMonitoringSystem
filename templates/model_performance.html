@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Performance — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Admin</span>
+      <a href="{{ url_for('admin') }}" class="sidebar-item"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
+      <a href="{{ url_for('audit_logs') }}" class="sidebar-item"><i class="bi bi-journal-text"></i><span>Audit Logs</span></a>
+      <a href="{{ url_for('model_performance') }}" class="sidebar-item active"><i class="bi bi-graph-up-arrow"></i><span>Model Performance</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-graph-up-arrow me-2" style="color:var(--cyan);"></i>Model Performance</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">A</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">admin</span>
+    </header>
+    <main class="dash-content">
+      <div class="mb-4">
+        <h2 style="font-size:1.4rem;font-weight:700;margin:0;">AI Model Performance</h2>
+        <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">Metrics computed from real test-split evaluation — not fabricated</p>
+      </div>
+
+      {% if perf.get('error') %}
+      <div class="dash-panel">
+        <div class="panel-body text-center" style="padding:40px;">
+          <i class="bi bi-exclamation-triangle-fill" style="font-size:2rem;color:var(--orange);display:block;margin-bottom:12px;"></i>
+          <p style="color:var(--orange);">Could not compute metrics: {{ perf.error }}</p>
+        </div>
+      </div>
+      {% else %}
+
+      <!-- Model Info -->
+      <div class="dash-panel mb-4">
+        <div class="panel-header"><span class="panel-title"><i class="bi bi-cpu-fill"></i>Model Information</span>
+          {% if perf.version %}<span style="background:rgba(56,189,248,.1);color:var(--cyan);padding:3px 10px;border-radius:4px;font-size:.8rem;font-weight:600;">{{ perf.version }}</span>{% endif %}
+        </div>
+        <div class="panel-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {% set info = [
+                ('Algorithm', perf.algorithm),
+                ('Training Date', perf.train_date),
+                ('Training Samples', '{:,}'.format(perf.train_samples) if perf.train_samples else '—'),
+                ('Feature Count', perf.feature_count),
+                ('Label Type', perf.label_type if perf.label_type else 'synthetic'),
+                ('Brier Score', perf.brier_score if perf.brier_score is defined else '—'),
+              ] %}
+              {% for label, value in info %}
+              <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <span style="font-size:.83rem;color:var(--gray);">{{ label }}</span>
+                <span style="font-size:.85rem;font-weight:600;color:var(--white);">{{ value }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="col-md-6">
+              <div style="font-size:.83rem;color:var(--gray);margin-bottom:8px;">Feature Names:</div>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for f in perf.feature_names %}
+                <span style="background:rgba(56,189,248,.1);color:var(--cyan);padding:3px 10px;border-radius:4px;font-size:.78rem;">{{ f }}</span>
+                {% endfor %}
+              </div>
+              {% if perf.scoring_weights %}
+              <div style="font-size:.83rem;color:var(--gray);margin-bottom:8px;">Hybrid Scoring Weights:</div>
+              {% for comp, weight in perf.scoring_weights.items() %}
+              <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <span style="font-size:.78rem;color:var(--gray);">{{ comp|replace('_',' ')|title }}</span>
+                <span style="font-size:.78rem;color:var(--cyan);font-weight:600;">{{ (weight*100)|round|int }}%</span>
+              </div>
+              {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          {% if perf.design_note %}
+          <div class="mt-3 p-3" style="background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:8px;">
+            <i class="bi bi-info-circle-fill me-2" style="color:var(--cyan);"></i>
+            <span style="font-size:.82rem;color:var(--gray);">{{ perf.design_note }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="row g-3 mb-4">
+        {% set metrics = [
+          ('Accuracy',    perf.accuracy,  'blue',     'Correct predictions over total'),
+          ('Precision',   perf.precision, 'cyan',     'Of flagged logins, how many were truly suspicious'),
+          ('Recall ★',   perf.recall,    'green',    'Of all suspicious, how many were caught — KEY for security'),
+          ('F1 Score',    perf.f1,        'orange',   'Harmonic mean of Precision and Recall'),
+          ('ROC-AUC',     perf.roc_auc,   'glow-blue','Discriminative ability (100% = perfect)'),
+        ] %}
+        {% for name, value, color, desc in metrics %}
+        <div class="col-xl col-md-4 col-6">
+          <div class="stat-card text-center">
+            <div style="font-size:2rem;font-weight:800;color:var(--{{ color }});">{{ value }}%</div>
+            <div style="font-size:.85rem;font-weight:600;color:var(--white);margin-top:4px;">{{ name }}</div>
+            <div style="font-size:.73rem;color:var(--gray);margin-top:4px;">{{ desc }}</div>
+            <div style="height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:12px;overflow:hidden;">
+              <div class="metric-bar" data-width="{{ value }}" style="height:100%;width:0%;background:var(--{{ color }});border-radius:2px;transition:width 1.5s ease;"></div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        <!-- Brier Score separately (lower = better, not %) -->
+        <div class="col-xl col-md-4 col-6">
+          <div class="stat-card text-center">
+            <div style="font-size:2rem;font-weight:800;color:var(--cyan);">
+              {{ perf.brier_score if perf.brier_score is defined else '—' }}
+            </div>
+            <div style="font-size:.85rem;font-weight:600;color:var(--white);margin-top:4px;">Brier Score</div>
+            <div style="font-size:.73rem;color:var(--gray);margin-top:4px;">Calibration quality (0=perfect, lower=better)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security recall note -->
+      <div class="dash-panel mb-4" style="border-color:rgba(16,185,129,.3);">
+        <div class="panel-body">
+          <div class="d-flex align-items-start gap-3">
+            <i class="bi bi-shield-fill-check" style="font-size:1.8rem;color:var(--green);flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.9rem;font-weight:700;color:var(--white);margin-bottom:6px;">
+                Why Recall Matters More Than Accuracy for Threat Detection
+              </div>
+              <p style="font-size:.82rem;color:var(--gray);margin:0;line-height:1.7;">
+                In security applications, <strong style="color:var(--green);">missing a real threat (False Negative)</strong>
+                is far more costly than a false alarm. A model with 99% accuracy but 0% recall would flag nothing
+                and miss every attack. <strong style="color:var(--cyan);">Recall</strong> measures how many actual
+                suspicious logins were correctly identified — this is the primary metric for any intrusion detection system.
+                The <strong style="color:var(--cyan);">Brier Score</strong> measures probability calibration quality,
+                ensuring stated confidence values correspond to actual empirical frequencies.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confusion Matrix -->
+      <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+          <div class="dash-panel h-100">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-grid-3x3-gap-fill"></i>Confusion Matrix</span></div>
+            <div class="panel-body">
+              <p style="font-size:.78rem;color:var(--gray);margin-bottom:16px;">Rows = Actual, Columns = Predicted</p>
+              <table style="width:100%;border-collapse:collapse;text-align:center;">
+                <thead>
+                  <tr>
+                    <th style="padding:10px;color:var(--gray);font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.08);"></th>
+                    <th style="padding:10px;color:var(--green);font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.08);">Pred: Normal</th>
+                    <th style="padding:10px;color:var(--red);font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.08);">Pred: Suspicious</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding:14px;color:var(--green);font-size:.8rem;font-weight:600;">Actual: Normal</td>
+                    <td style="background:rgba(16,185,129,.12);color:var(--green);font-size:1.4rem;font-weight:700;border-radius:8px;">{{ perf.tn }}</td>
+                    <td style="background:rgba(239,68,68,.08);color:var(--red);font-size:1.4rem;font-weight:700;border-radius:8px;">{{ perf.fp }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:14px;color:var(--red);font-size:.8rem;font-weight:600;">Actual: Suspicious</td>
+                    <td style="background:rgba(239,68,68,.08);color:var(--red);font-size:1.4rem;font-weight:700;border-radius:8px;">{{ perf.fn }}</td>
+                    <td style="background:rgba(16,185,129,.12);color:var(--green);font-size:1.4rem;font-weight:700;border-radius:8px;">{{ perf.tp }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="d-flex gap-3 mt-3 flex-wrap">
+                <span style="font-size:.75rem;color:var(--green);"><span style="font-weight:700;">TN {{ perf.tn }}</span> — True Negatives</span>
+                <span style="font-size:.75rem;color:var(--cyan);"><span style="font-weight:700;">FP {{ perf.fp }}</span> — False Positives</span>
+                <span style="font-size:.75rem;color:var(--orange);"><span style="font-weight:700;">FN {{ perf.fn }}</span> — False Negatives</span>
+                <span style="font-size:.75rem;color:var(--red);"><span style="font-weight:700;">TP {{ perf.tp }}</span> — True Positives</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="dash-panel h-100">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-info-circle-fill"></i>Model Notes</span></div>
+            <div class="panel-body">
+              <div class="d-flex flex-column gap-3">
+                <div class="d-flex align-items-start gap-3">
+                  <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);flex-shrink:0;"></i>
+                  <div><strong style="font-size:.85rem;">Class Imbalance Handling</strong>
+                  <p style="font-size:.8rem;color:var(--gray);margin:2px 0 0;">Trained with <code style="color:var(--cyan);">class_weight="balanced"</code>. This prevents the model from being biased toward the majority (normal) class.</p></div>
+                </div>
+                <div class="d-flex align-items-start gap-3">
+                  <i class="bi bi-check-circle-fill mt-1" style="color:var(--cyan);flex-shrink:0;"></i>
+                  <div><strong style="font-size:.85rem;">Stratified Split</strong>
+                  <p style="font-size:.8rem;color:var(--gray);margin:2px 0 0;">Used <code style="color:var(--cyan);">stratify=y</code> during train/test split to ensure proportional class distribution in both sets.</p></div>
+                </div>
+                <div class="d-flex align-items-start gap-3">
+                  <i class="bi bi-check-circle-fill mt-1" style="color:var(--orange);flex-shrink:0;"></i>
+                  <div><strong style="font-size:.85rem;">Dataset Scale</strong>
+                  <p style="font-size:.8rem;color:var(--gray);margin:2px 0 0;">Trained on {{ '{:,}'.format(perf.train_samples) }} samples from the CERT Insider Threat dataset (logon events). Label distribution: ~4.3% suspicious, ~95.7% normal.</p></div>
+                </div>
+                <div class="d-flex align-items-start gap-3">
+                  <i class="bi bi-check-circle-fill mt-1" style="color:var(--glow-blue);flex-shrink:0;"></i>
+                  <div><strong style="font-size:.85rem;">Threshold-Based Risk</strong>
+                  <p style="font-size:.8rem;color:var(--gray);margin:2px 0 0;">Risk level derived from model probability: 0–30 → LOW, 31–70 → MEDIUM, 71–100 → HIGH. Thresholds are configurable.</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+
+  // Animate metric bars
+  setTimeout(()=>{
+    document.querySelectorAll('.metric-bar[data-width]').forEach(el=>{
+      el.style.width=el.dataset.width+'%';
+    });
+  }, 300);
+</script>
+</body>
+</html>

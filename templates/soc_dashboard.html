@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}SOC Dashboard — Secure Cloud Access Monitoring{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+  .soc-metric {
+    background: linear-gradient(135deg, #0f3a4d 0%, #0d2d3d 100%);
+    border: 1px solid #1a5a7a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .soc-metric::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+  }
+  .soc-metric:hover::before {
+    left: 100%;
+  }
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #00ff9d;
+    text-shadow: 0 0 10px rgba(0,255,157,0.5);
+  }
+  .metric-label {
+    font-size: 0.875rem;
+    color: #a0a9b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 10px;
+  }
+  .metric-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 2rem;
+    opacity: 0.3;
+    color: #00ff9d;
+  }
+  .critical-alert {
+    border-left: 4px solid #ff1a4d;
+  }
+  .high-alert {
+    border-left: 4px solid #ff9500;
+  }
+  .medium-alert {
+    border-left: 4px solid #ffb400;
+  }
+  .event-row {
+    background: rgba(15, 58, 77, 0.3);
+    border: 1px solid rgba(26, 90, 122, 0.3);
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+  }
+  .event-row:hover {
+    background: rgba(15, 58, 77, 0.5);
+    border-color: rgba(0, 255, 157, 0.3);
+  }
+  .event-info {
+    flex-grow: 1;
+  }
+  .event-user {
+    color: #00ff9d;
+    font-weight: 600;
+  }
+  .event-app {
+    color: #a0a9b8;
+    font-size: 0.875rem;
+  }
+  .event-risk {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .risk-high {
+    background: rgba(255, 26, 77, 0.2);
+    color: #ff1a4d;
+  }
+  .risk-medium {
+    background: rgba(255, 180, 0, 0.2);
+    color: #ffb400;
+  }
+  .event-score {
+    margin-left: 20px;
+    text-align: right;
+  }
+  .threat-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00ff9d;
+  }
+  .confidence-label {
+    font-size: 0.75rem;
+    color: #a0a9b8;
+  }
+  .dashboard-section {
+    background: linear-gradient(to bottom, rgba(7, 17, 31, 0.5), rgba(13, 45, 61, 0.3));
+    border: 1px solid rgba(26, 90, 122, 0.3);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+  }
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #00ff9d;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(0, 255, 157, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-soc {
+    background: linear-gradient(135deg, #00b4d8 0%, #0096c7 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-soc:hover {
+    background: linear-gradient(135deg, #00d4ff 0%, #00b4d8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 180, 216, 0.3);
+    color: white;
+    text-decoration: none;
+  }
+  .no-incidents {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a0a9b8;
+  }
+  .no-incidents i {
+    font-size: 3rem;
+    color: #00ff9d;
+    opacity: 0.5;
+    margin-bottom: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row mb-5">
+    <div class="col-12">
+      <h1 class="display-4 fw-bold mb-2">
+        <i class="bi bi-shield-check-fill" style="color: #00ff9d;"></i> SOC Dashboard
+      </h1>
+      <p class="lead text-muted">Real-time security operations center monitoring</p>
+    </div>
+  </div>
+
+  <!-- Metrics Row -->
+  <div class="row mb-4">
+    <!-- Total Events Today -->
+    <div class="col-md-3 col-sm-6">
+      <div class="soc-metric {% if summary.total_events_today > 0 %}high-alert{% endif %}">
+        <div class="metric-icon">
+          <i class="bi bi-activity"></i>
+        </div>
+        <div class="metric-value">{{ summary.events_received or 0 }}</div>
+        <div class="metric-label">Events Received</div>
+      </div>
+    </div>
+
+    <!-- Open Incidents -->
+    <div class="col-md-3 col-sm-6">
+      <div class="soc-metric {% if summary.open_incidents > 0 %}medium-alert{% endif %}">
+        <div class="metric-icon">
+          <i class="bi bi-exclamation-circle-fill"></i>
+        </div>
+        <div class="metric-value">{{ summary.open_incidents or 0 }}</div>
+        <div class="metric-label">Open Incidents</div>
+      </div>
+    </div>
+
+    <!-- Critical Incidents -->
+    <div class="col-md-3 col-sm-6">
+      <div class="soc-metric {% if summary.critical_incidents > 0 %}critical-alert{% endif %}">
+        <div class="metric-icon">
+          <i class="bi bi-fire"></i>
+        </div>
+        <div class="metric-value" style="color: #ff1a4d;">{{ summary.critical_incidents or 0 }}</div>
+        <div class="metric-label">Critical Incidents</div>
+      </div>
+    </div>
+
+    <!-- Active Applications -->
+    <div class="col-md-3 col-sm-6">
+      <div class="soc-metric">
+        <div class="metric-icon">
+          <i class="bi bi-cloud-fill"></i>
+        </div>
+        <div class="metric-value">{{ summary.apps_active or 0 }}</div>
+        <div class="metric-label">Active Applications</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database-backed SOC KPI breakdown -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="soc-metric critical-alert">
+        <div class="metric-value" style="color: #ff1a4d;">{{ summary.high_risk_events or 0 }}</div>
+        <div class="metric-label">High Risk Events</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="soc-metric medium-alert">
+        <div class="metric-value" style="color: #ffb400;">{{ summary.medium_risk_events or 0 }}</div>
+        <div class="metric-label">Medium Risk Events</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="soc-metric">
+        <div class="metric-value" style="color: #ffd60a;">{{ summary.low_risk_events or 0 }}</div>
+        <div class="metric-label">Low Risk Events</div>
+      </div>
+    </div>
+  </div>
+  <div class="row mb-4">
+    <div class="col-md-4"><div class="soc-metric"><div class="metric-value">{{ summary.open_incidents or 0 }}</div><div class="metric-label">Open Incidents</div></div></div>
+    <div class="col-md-4"><div class="soc-metric"><div class="metric-value">{{ summary.investigating_incidents or 0 }}</div><div class="metric-label">Investigating Incidents</div></div></div>
+    <div class="col-md-4"><div class="soc-metric"><div class="metric-value">{{ summary.resolved_incidents or 0 }}</div><div class="metric-label">Resolved Incidents</div></div></div>
+  </div>
+
+  <!-- Recent Security Events -->
+  <div class="dashboard-section">
+    <div class="section-title">
+      <i class="bi bi-clock-history"></i>
+      Recent Security Events
+      <a href="{{ url_for('security_events') }}" class="ms-auto btn-soc">
+        <i class="bi bi-arrow-right-short"></i> View All
+      </a>
+    </div>
+
+    {% if recent_events %}
+      <div class="events-list">
+        {% for event in recent_events %}
+          <div class="event-row {% if event.risk_level == 'HIGH' %}high-alert{% elif event.risk_level == 'MEDIUM' %}medium-alert{% endif %}">
+            <div class="event-info">
+              <div class="event-user">
+                <i class="bi bi-person-circle"></i> {{ event.username }}
+              </div>
+              <div class="event-app">
+                <i class="bi bi-cloud"></i> App: {{ event.application_id }} 
+                <i class="bi bi-geo-alt"></i> {{ event.ip_address }}
+              </div>
+              <div style="font-size: 0.75rem; color: #a0a9b8; margin-top: 5px;">
+                {{ event.timestamp }} · Device: {{ event.device_id }} · Status: {{ event.status or 'received' }}<br>
+                Model probability: {{ event.model_probability }} · Behavioural evidence: {{ event.behavioural_evidence or '[]' }}
+              </div>
+            </div>
+            <div>
+              <span class="event-risk {% if event.risk_level == 'HIGH' %}risk-high{% else %}risk-medium{% endif %}">
+                {{ event.risk_level }} Risk
+              </span>
+            </div>
+            <div class="event-score">
+              <div class="threat-score">{{ event.threat_score | round(1) }}%</div>
+              <div class="confidence-label">Threat Score</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-incidents">
+        <i class="bi bi-check-circle-fill"></i>
+        <p>No high-risk security events detected today</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="dashboard-section">
+    <div class="section-title">
+      <i class="bi bi-lightning-charge-fill"></i>
+      Quick Actions
+    </div>
+    <div class="row">
+      <div class="col-md-3 col-sm-6 mb-3">
+        <a href="{{ url_for('incidents') }}" class="btn btn-outline-light w-100">
+          <i class="bi bi-exclamation-lg"></i> View Incidents
+        </a>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <a href="{{ url_for('security_events') }}" class="btn btn-outline-light w-100">
+          <i class="bi bi-eye"></i> Security Events
+        </a>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <a href="{{ url_for('admin_applications') }}" class="btn btn-outline-light w-100">
+          <i class="bi bi-cloud"></i> Applications
+        </a>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <a href="{{ url_for('admin') }}" class="btn btn-outline-light w-100">
+          <i class="bi bi-gear"></i> Admin Panel
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-refresh notice -->
+  <div class="alert alert-info mt-4" role="alert">
+    <i class="bi bi-info-circle"></i>
+    <strong>Dashboard Info:</strong> Data shown is real-time from the database. Refresh the page for latest updates.
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

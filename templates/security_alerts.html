@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Alerts — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item active"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Account</span>
+      <a href="{{ url_for('profile') }}" class="sidebar-item"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('settings') }}" class="sidebar-item"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-bell-fill me-2" style="color:var(--cyan);"></i>Security Alerts</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">{{ session.get('username','U')[0]|upper }}</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">{{ session.get('username') }}</span>
+    </header>
+    <main class="dash-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}
+      {% endwith %}
+
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:700;margin:0;">Security Alerts</h2>
+          <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">{{ alerts|length }} alert(s) found</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          {% for s in ['All','New','Investigating','Resolved'] %}
+          <a href="{{ url_for('security_alerts', status=s) }}"
+             class="btn-outline-cyber" style="padding:6px 14px;font-size:.8rem;border-radius:8px;{% if filter_status==s %}background:var(--cyan);color:var(--bg-primary);{% endif %}">
+            {{ s }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="dash-panel">
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead>
+              <tr><th>#</th><th>Username</th><th>Alert Type</th><th>Severity</th><th>Message</th><th>Threat Score</th><th>Created</th><th>Status</th>{% if is_admin %}<th>Action</th>{% endif %}</tr>
+            </thead>
+            <tbody>
+              {% if alerts %}
+                {% for a in alerts %}
+                <tr>
+                  <td style="color:var(--gray);">{{ a['id'] }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;">{{ a['username'][0]|upper if a['username'] else '?' }}</div>
+                      <span style="font-size:.83rem;">{{ a['username'] }}</span>
+                    </div>
+                  </td>
+                  <td style="font-size:.83rem;">{{ a['alert_type'] or '—' }}</td>
+                  <td>
+                    {% if a['severity']=='High' %}<span class="status-badge status-failed">High</span>
+                    {% elif a['severity']=='Medium' %}<span class="status-badge status-warning">Medium</span>
+                    {% else %}<span class="status-badge status-success">Low</span>{% endif %}
+                  </td>
+                  <td style="font-size:.78rem;color:var(--gray);max-width:220px;">{{ a['message'] or '—' }}</td>
+                  <td style="font-weight:700;color:{% if (a['threat_score']|float) >= 71 %}var(--red){% elif (a['threat_score']|float) >= 31 %}var(--orange){% else %}var(--green){% endif %};">{{ a['threat_score'] or 0 }}</td>
+                  <td style="font-size:.78rem;color:var(--gray);white-space:nowrap;">{{ a['created_at'] or a['alert_time'] or '—' }}</td>
+                  <td>
+                    {% if a['status']=='New' %}<span class="status-badge status-failed">New</span>
+                    {% elif a['status']=='Resolved' %}<span class="status-badge status-success">Resolved</span>
+                    {% else %}<span class="status-badge status-warning">{{ a['status'] }}</span>{% endif %}
+                  </td>
+                  {% if is_admin %}
+                  <td>
+                    {% if a['status'] != 'Resolved' %}
+                    <form method="POST" action="{{ url_for('resolve_alert', alert_id=a['id']) }}" style="display:inline;">
+                      <button type="submit" class="btn-outline-cyber" style="padding:5px 12px;font-size:.75rem;border-radius:8px;">
+                        <i class="bi bi-check2-circle me-1"></i>Resolve
+                      </button>
+                    </form>
+                    {% else %}<span style="color:var(--gray);font-size:.78rem;">—</span>{% endif %}
+                  </td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="{% if is_admin %}9{% else %}8{% endif %}" style="text-align:center;padding:40px;color:var(--gray);">
+                <i class="bi bi-bell-slash" style="font-size:2rem;color:var(--green);display:block;margin-bottom:8px;"></i>No alerts found.
+              </td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+</script>
+</body>
+</html>

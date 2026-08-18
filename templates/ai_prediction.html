@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Prediction — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item active"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Account</span>
+      <a href="{{ url_for('profile') }}" class="sidebar-item"><i class="bi bi-person-circle"></i><span>Profile</span></a>
+      <a href="{{ url_for('settings') }}" class="sidebar-item"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);">
+        <i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span>
+      </a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-cpu-fill me-2" style="color:var(--cyan);"></i>AI Prediction</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">{{ session.get('username','U')[0]|upper }}</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">{{ session.get('username') }}</span>
+    </header>
+    <main class="dash-content">
+      <div class="mb-4">
+        <h2 style="font-size:1.4rem;font-weight:700;margin:0;">AI Threat Prediction</h2>
+        <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">Latest AI model analysis for {{ username }}</p>
+      </div>
+
+      {% if ai_enabled == 0 %}
+      <!-- AI Disabled Panel -->
+      <div class="dash-panel mb-4" style="border-color:rgba(239,68,68,.3);">
+        <div class="panel-body text-center" style="padding:40px;">
+          <i class="bi bi-cpu" style="font-size:3rem;color:rgba(239,68,68,.5);display:block;margin-bottom:16px;"></i>
+          <h4 style="color:var(--red);font-weight:700;">AI Threat Detection Disabled</h4>
+          <p style="color:var(--gray);">AI-based login threat analysis is currently disabled for this account.</p>
+          <a href="{{ url_for('settings') }}" class="btn-cyber" style="padding:10px 28px;">
+            <i class="bi bi-gear-fill me-2"></i>Enable in Settings
+          </a>
+        </div>
+      </div>
+      {% elif prediction %}
+      <!-- AI Active Panel -->
+      {% set ts = prediction.get('threat_score', 0)|float %}
+      {% set conf = prediction.get('confidence', 0)|float %}
+      {% set risk = prediction.get('risk', 'LOW') %}
+      <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+          <div class="dash-panel h-100">
+            <div class="panel-header">
+              <span class="panel-title"><i class="bi bi-speedometer2"></i>Threat Score</span>
+              <span style="font-size:.72rem;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:50px;padding:3px 10px;">
+                <i class="bi bi-circle-fill me-1" style="font-size:.5rem;animation:pulseGlow 2s ease-in-out infinite;"></i>Active
+              </span>
+            </div>
+            <div class="panel-body text-center">
+              <div style="position:relative;width:140px;height:140px;margin:0 auto 16px;">
+                <canvas id="gaugeCanvas" width="140" height="140"></canvas>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                  <span style="font-size:2rem;font-weight:800;color:var(--white);">{{ ts }}</span>
+                  <span style="font-size:.7rem;color:var(--gray);">/ 100</span>
+                </div>
+              </div>
+              <div class="ai-prediction-badge {% if risk=='HIGH' %}threat-high{% elif risk=='MEDIUM' %}threat-medium{% else %}threat-low{% endif %}" style="font-size:1rem;padding:6px 20px;">
+                {{ risk }} THREAT
+              </div>
+              <div class="mt-3" style="font-size:.9rem;color:var(--white);font-weight:600;">{{ prediction.get('prediction','—') }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="dash-panel h-100">
+            <div class="panel-header">
+              <span class="panel-title"><i class="bi bi-list-check"></i>Risk Factors &amp; Confidence</span>
+            </div>
+            <div class="panel-body">
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span style="font-size:.85rem;color:var(--gray);">Model Confidence</span>
+                  <span style="font-size:.85rem;font-weight:600;color:var(--cyan);">{{ conf }}%</span>
+                </div>
+                <div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;width:{{ conf }}%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:4px;transition:width 1.5s ease;"></div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div style="font-size:.85rem;color:var(--gray);margin-bottom:10px;">Risk Reasons:</div>
+                {% set reasons = prediction.get('reasons', []) %}
+                {% if reasons %}
+                  {% for reason in reasons %}
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-exclamation-circle-fill" style="color:{% if risk=='HIGH' %}var(--red){% elif risk=='MEDIUM' %}var(--orange){% else %}var(--green){% endif %};flex-shrink:0;"></i>
+                    <span style="font-size:.85rem;color:var(--white);">{{ reason }}</span>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <p style="color:var(--gray);">No risk factors detected.</p>
+                {% endif %}
+              </div>            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="dash-panel mb-4">
+        <div class="panel-body text-center" style="padding:40px;">
+          <i class="bi bi-info-circle" style="font-size:2rem;color:var(--cyan);display:block;margin-bottom:12px;"></i>
+          <p style="color:var(--gray);">No prediction data available. Please log in again to generate a new prediction.</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent predictions -->
+      <div class="dash-panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="bi bi-clock-history"></i>Last 10 Predictions ({{ username }})</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead>
+              <tr><th>#</th><th>Date</th><th>Time</th><th>IP</th><th>Device</th><th>Prediction</th><th>Risk</th><th>Threat Score</th><th>Confidence</th></tr>
+            </thead>
+            <tbody>
+              {% if recent_logins %}
+                {% for r in recent_logins %}
+                <tr>
+                  <td style="color:var(--gray);">{{ loop.index }}</td>
+                  <td style="font-size:.8rem;color:var(--gray);">{{ r['login_date'] or '—' }}</td>
+                  <td style="font-size:.8rem;color:var(--gray);">{{ r['login_time'] or '—' }}</td>
+                  <td style="font-family:monospace;font-size:.78rem;color:var(--cyan);">{{ r['ip_address'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ r['device'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ r['prediction'] or '—' }}</td>
+                  <td>{% if r['risk']=='HIGH' %}<span class="status-badge status-failed">HIGH</span>{% elif r['risk']=='MEDIUM' %}<span class="status-badge status-warning">MEDIUM</span>{% else %}<span class="status-badge status-success">LOW</span>{% endif %}</td>
+                  <td style="font-size:.82rem;font-weight:600;color:{% if (r['threat_score']|float) >= 71 %}var(--red){% elif (r['threat_score']|float) >= 31 %}var(--orange){% else %}var(--green){% endif %};">{{ r['threat_score'] or 0 }}</td>
+                  <td style="font-size:.8rem;color:var(--cyan);">{{ r['confidence'] or 0 }}%</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray);">No login history found.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+
+  {% if ai_enabled == 1 and prediction %}
+  const gaugeCanvas = document.getElementById('gaugeCanvas');
+  if(gaugeCanvas){
+    const gCtx=gaugeCanvas.getContext('2d');
+    const score={{ (prediction.get('threat_score',0)|float) }};
+    function drawGauge(val){
+      gCtx.clearRect(0,0,140,140);
+      gCtx.beginPath();gCtx.arc(70,70,52,Math.PI*.75,Math.PI*2.25);
+      gCtx.strokeStyle='rgba(255,255,255,.07)';gCtx.lineWidth=8;gCtx.lineCap='round';gCtx.stroke();
+      const color=val<31?'#10B981':val<71?'#F59E0B':'#EF4444';
+      gCtx.beginPath();gCtx.arc(70,70,52,Math.PI*.75,Math.PI*(.75+1.5*(val/100)));
+      gCtx.strokeStyle=color;gCtx.lineWidth=8;gCtx.lineCap='round';gCtx.stroke();
+    }
+    let cur=0;const t0=performance.now();
+    function anim(now){cur=Math.min(score,Math.round(score*Math.min((now-t0)/1500,1)));drawGauge(cur);if(cur<score)requestAnimationFrame(anim);}
+    requestAnimationFrame(anim);
+  }
+  {% endif %}
+</script>
+</body>
+</html>

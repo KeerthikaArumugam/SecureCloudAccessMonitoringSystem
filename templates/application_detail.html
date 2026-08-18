@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2>{{ app.application_name }}</h2>
+      <p class="text-muted mb-0">{{ app.application_id }}</p>
+    </div>
+    <a href="{{ url_for('admin_applications') }}" class="btn btn-outline-light">Back to Applications</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Events</small><h3>{{ app.total_events or 0 }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>High Risk</small><h3>{{ stats.high }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Medium Risk</small><h3>{{ stats.medium }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Low Risk</small><h3>{{ stats.low }}</h3></div></div></div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header">Application Details</div>
+        <div class="card-body">
+          <p><strong>Owner:</strong> {{ app.owner or 'admin' }}</p>
+          <p><strong>Status:</strong> {{ app.status }}</p>
+          <p><strong>Description:</strong> {{ app.description or 'No description provided.' }}</p>
+          <p><strong>Created:</strong> {{ app.created_at or 'Unknown' }}</p>
+          <p><strong>Last Event:</strong> {{ app.last_event_at or 'Never' }}</p>
+        </div>
+      </div>
+
+      <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header">Top Risky Users</div>
+        <div class="card-body">
+          {% if top_users %}
+            <ul class="list-group list-group-flush bg-dark">
+              {% for user in top_users %}
+              <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                <span>{{ user.username }}</span>
+                <span>{{ user.event_count }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No events yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card bg-dark border-secondary">
+        <div class="card-header">Top Risky IPs</div>
+        <div class="card-body">
+          {% if top_ips %}
+            <ul class="list-group list-group-flush bg-dark">
+              {% for ip in top_ips %}
+              <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                <span>{{ ip.ip_address }}</span>
+                <span>{{ ip.count }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No IP history yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header">Recent Authentication Events</div>
+        <div class="table-responsive">
+          <table class="table table-dark table-striped align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Time</th>
+                <th>IP</th>
+                <th>Device</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td>{{ event.username }}</td>
+                <td>{{ event.timestamp }}</td>
+                <td>{{ event.ip_address }}</td>
+                <td>{{ event.device_id }}</td>
+                <td><span class="badge bg-{{ 'danger' if event.risk_level == 'HIGH' else ('warning text-dark' if event.risk_level == 'MEDIUM' else 'success') }}">{{ event.risk_level or 'LOW' }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card bg-dark border-secondary">
+        <div class="card-header">Recent Alerts</div>
+        <div class="card-body">
+          {% if recent_alerts %}
+            {% for alert in recent_alerts %}
+            <div class="border-bottom border-secondary pb-2 mb-2">
+              <strong>{{ alert.username }}</strong>
+              <div class="small text-muted">{{ alert.alert_time }} • {{ alert.severity }}</div>
+              <div>{{ alert.message }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted mb-0">No alerts for this application.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

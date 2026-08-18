@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Reset Code — AI-Powered Secure Cloud Access Monitoring System</title>
+  <meta name="description" content="Verify your 6-digit password reset code">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Global Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .otp-input {
+      letter-spacing: 0.3em;
+      font-size: 1.35rem;
+      font-weight: 700;
+      text-align: center;
+      color: #38BDF8;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cyber Background -->
+<div class="cyber-bg">
+  <div class="bg-grid"></div>
+  <div class="bg-radial" style="background:radial-gradient(ellipse 80% 60% at 50% 40%, rgba(56,189,248,.12) 0%, transparent 70%);"></div>
+  <canvas id="particlesCanvas"></canvas>
+  <canvas id="networkCanvas"></canvas>
+  <div class="bg-gradient-overlay"></div>
+</div>
+
+<!-- Floating decorative icons -->
+<div aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:0;">
+  <i class="bi bi-shield-check float-anim" style="position:absolute;top:10%;left:5%;font-size:3rem;color:rgba(56,189,248,.07);animation-duration:5s;"></i>
+  <i class="bi bi-shield-lock-fill float-anim" style="position:absolute;top:20%;right:7%;font-size:2rem;color:rgba(245,158,11,.07);animation-duration:4s;animation-delay:.5s;"></i>
+  <i class="bi bi-envelope-check-fill float-anim" style="position:absolute;bottom:15%;left:8%;font-size:2.5rem;color:rgba(56,189,248,.06);animation-duration:6s;animation-delay:1s;"></i>
+</div>
+
+<!-- ═══ VERIFY OTP CARD ═══ -->
+<main class="auth-page" role="main">
+  <div style="position:relative;z-index:2;width:100%;max-width:480px;padding:0 16px;">
+
+    <!-- Back link -->
+    <div class="text-center mb-3">
+      <a href="{{ url_for('forgot_password') }}" class="text-gray" style="font-size:.85rem;text-decoration:none;transition:color .3s;">
+        <i class="bi bi-arrow-left me-1"></i>Request a New Code
+      </a>
+    </div>
+
+    <div class="auth-card">
+      <!-- Icon -->
+      <div class="auth-icon-wrap" style="background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(16,185,129,.2));border-color:rgba(56,189,248,.35);color:var(--cyan);">
+        <i class="bi bi-shield-check"></i>
+      </div>
+
+      <h1 class="auth-title">Verify Reset Code</h1>
+      <p class="auth-subtitle">Enter the registered email and 6-digit code sent to your inbox</p>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} mb-3 py-2" role="alert"
+                 style="border-radius:10px;font-size:.85rem;">
+              <i class="bi bi-{{ 'exclamation-triangle-fill' if category == 'error' else 'check-circle-fill' }} me-2"></i>{{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- OTP Form -->
+      <form id="verifyForm" method="POST" action="{{ url_for('verify_otp') }}" novalidate>
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <!-- Email -->
+        <div class="cyber-input-wrap mb-3">
+          <label class="field-label" for="email">Email Address</label>
+          <i class="bi bi-envelope-fill input-icon"></i>
+          <input type="email" id="email" name="email" class="cyber-input"
+                 placeholder="Enter your registered email"
+                 autocomplete="email"
+                 required
+                 value="{{ email or request.form.get('email', '') }}">
+        </div>
+
+        <!-- 6-digit Code -->
+        <div class="cyber-input-wrap mb-4">
+          <label class="field-label" for="otp">6-Digit Verification Code</label>
+          <i class="bi bi-shield-lock-fill input-icon"></i>
+          <input type="text" id="otp" name="otp" class="cyber-input otp-input"
+                 placeholder="583214"
+                 maxlength="6"
+                 pattern="[0-9]*"
+                 inputmode="numeric"
+                 autocomplete="one-time-code"
+                 required
+                 value="{{ request.form.get('otp', '') }}">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-cyber w-100 py-3 d-flex align-items-center justify-content-center gap-2" id="verifyBtn"
+                style="background:linear-gradient(135deg,var(--cyan) 0%,#10B981 100%);box-shadow:0 4px 20px rgba(56,189,248,.30);">
+          <i class="bi bi-check-circle-fill" id="verifyIcon"></i>
+          <span id="verifyBtnText">Verify Code</span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="d-flex align-items-center gap-3 my-4">
+        <div style="flex:1;height:1px;background:rgba(56,189,248,.15);"></div>
+        <span style="color:var(--gray);font-size:.78rem;">CODE EXPIRY & LIMITS</span>
+        <div style="flex:1;height:1px;background:rgba(56,189,248,.15);"></div>
+      </div>
+
+      <!-- Info note -->
+      <div class="d-flex align-items-start gap-2 mb-4 p-3"
+           style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:10px;font-size:.80rem;color:var(--gray);">
+        <i class="bi bi-info-circle-fill mt-1" style="color:var(--cyan);flex-shrink:0;"></i>
+        <span>Codes expire in 10 minutes. A maximum of 5 verification attempts are allowed before a new code is required.</span>
+      </div>
+
+      <!-- Back to login -->
+      <p class="auth-footer-link">
+        Didn't receive code? <a href="{{ url_for('forgot_password') }}">Resend Code</a> or <a href="{{ url_for('login') }}">Sign In</a>
+      </p>
+    </div><!-- /auth-card -->
+
+    <!-- System status -->
+    <div class="text-center mt-3 d-flex justify-content-center align-items-center gap-3">
+      <span style="font-size:.75rem;color:var(--gray);">
+        <i class="bi bi-circle-fill me-1" style="color:var(--green);font-size:.5rem;"></i>All Systems Operational
+      </span>
+      <span style="font-size:.75rem;color:var(--gray);">
+        <i class="bi bi-shield-lock me-1" style="color:var(--cyan);"></i>SSL Encrypted
+      </span>
+    </div>
+
+  </div>
+</main>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

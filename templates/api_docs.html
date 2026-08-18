@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}API Documentation{% endblock %}
+{% block content %}
+<main class="container py-5">
+  <h1>Security Event &amp; SOC API</h1>
+  <p>Never put a real API key in source control, screenshots, or logs. Event ingestion requires an active application's <code>X-API-Key</code>; SOC and application read/write APIs require an authenticated administrator session.</p>
+  <h2>Submit an authentication event</h2>
+  <p><code>POST /api/v1/auth-events</code> — success: <code>201</code>; validation: <code>400</code>; missing/invalid key: <code>401</code>; application mismatch/disabled/revoked: <code>403</code>; rate limit: <code>429</code>.</p>
+  <pre><code>curl -X POST http://127.0.0.1:5000/api/v1/auth-events -H "Content-Type: application/json" -H "X-API-Key: &lt;development-key&gt;" -d '{"application_id":"demo-app","user_id":"demo-user","timestamp":"2026-08-17T10:30:00","ip_address":"192.0.2.10","device_id":"demo-device","browser":"Chrome","os":"Windows","login_success":true,"failed_attempts":0}'</code></pre>
+  <p>Response fields include <code>event_id</code>, <code>risk_level</code>, <code>threat_score</code>, <code>model_probability</code>, <code>confidence</code>, <code>reasons</code>, <code>alert_created</code>, and <code>incident_id</code>.</p>
+  <h2>SOC APIs</h2>
+  <table class="table table-dark table-striped"><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+    <tr><td>GET</td><td><code>/api/v1/soc/events?page=1&amp;per_page=20</code></td><td>Paginated events; filter by application, risk, user, IP, or status.</td></tr>
+    <tr><td>GET</td><td><code>/api/v1/soc/alerts</code></td><td>Paginated alerts; filter by application, severity, or status.</td></tr>
+    <tr><td>GET</td><td><code>/api/v1/soc/incidents</code></td><td>Paginated incidents; filter by application, severity, or status.</td></tr>
+    <tr><td>GET</td><td><code>/api/v1/soc/incidents/&lt;id&gt;</code></td><td>Incident, linked events/alerts, notes, assignments, and timeline.</td></tr>
+    <tr><td>POST</td><td><code>/api/v1/soc/incidents/&lt;id&gt;/assign</code></td><td>JSON: <code>{"analyst":"admin"}</code>.</td></tr>
+    <tr><td>POST</td><td><code>/api/v1/soc/incidents/&lt;id&gt;/status</code></td><td>JSON: <code>{"status":"TRIAGED","comment":"Reviewed"}</code>.</td></tr>
+    <tr><td>POST</td><td><code>/api/v1/soc/incidents/&lt;id&gt;/notes</code></td><td>JSON: <code>{"note":"Investigation started"}</code>; success <code>201</code>.</td></tr>
+    <tr><td>GET</td><td><code>/api/v1/applications</code></td><td>Database-backed application SOC overview.</td></tr>
+    <tr><td>GET</td><td><code>/api/v1/applications/&lt;application_id&gt;/summary</code></td><td>Isolated events, alerts, incidents, and counts for one application.</td></tr>
+  </tbody></table>
+  <p>Successful list responses use <code>{"items":[], "page":1, "per_page":20, "total":0}</code>. Errors use <code>{"error":"…"}</code> and never include stack traces or secrets.</p>
+</main>
+{% endblock %}

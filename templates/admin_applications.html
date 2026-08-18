@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Registry</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="container py-5">
+  <div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="mb-1">Monitored Applications</h2>
+      <p class="text-muted mb-0">Register and manage external authentication clients</p>
+    </div>
+    <a href="{{ url_for('admin') }}" class="btn btn-outline-light">Back to Admin</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ 'danger' if cat == 'error' else 'success' }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Total Applications</small><h3>{{ summary.total_applications }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Active Applications</small><h3>{{ summary.active_applications }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>Events Today</small><h3>{{ summary.events_today }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card bg-dark border-secondary"><div class="card-body"><small>High Risk Events</small><h3>{{ summary.high_risk_events }}</h3></div></div></div>
+  </div>
+
+  <div class="card bg-dark border-secondary mb-4">
+    <div class="card-header">Register Application</div>
+    <div class="card-body">
+      <form method="post">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Application ID</label>
+            <input class="form-control" name="application_id" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Application Name</label>
+            <input class="form-control" name="application_name" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Owner</label>
+            <input class="form-control" name="owner" value="admin">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">Register Application</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary">
+    <div class="card-header">Registered Applications</div>
+    <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Events</th>
+            <th>High</th>
+            <th>Medium</th>
+            <th>Low</th>
+            <th>Last Event</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr>
+            <td>
+              <strong><a href="{{ url_for('application_detail', application_id=app.application_id) }}" class="text-white text-decoration-none">{{ app.application_name }}</a></strong><br>
+              <small class="text-muted">{{ app.application_id }}</small>
+            </td>
+            <td>{{ app.owner or 'admin' }}</td>
+            <td>
+              {% if app.status == 'active' %}<span class="badge bg-success">Active</span>
+              {% elif app.status == 'inactive' %}<span class="badge bg-warning text-dark">Inactive</span>
+              {% else %}<span class="badge bg-danger">{{ app.status }}</span>{% endif %}
+            </td>
+            <td>{{ app.total_events or 0 }}</td>
+            <td>{{ app.high_risk_events or 0 }}</td>
+            <td>{{ app.medium_risk_events or 0 }}</td>
+            <td>{{ app.low_risk_events or 0 }}</td>
+            <td>{{ app.last_event_at or 'Never' }}</td>
+            <td class="d-flex gap-2">
+              <form method="post" action="{{ url_for('toggle_application', application_id=app.application_id) }}">
+                <button class="btn btn-sm btn-outline-light" type="submit">{{ 'Deactivate' if app.status == 'active' else 'Activate' }}</button>
+              </form>
+              <form method="post" action="{{ url_for('rotate_application_key', application_id=app.application_id) }}">
+                <button class="btn btn-sm btn-outline-warning" type="submit">Rotate</button>
+              </form>
+              <form method="post" action="{{ url_for('revoke_application', application_id=app.application_id) }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

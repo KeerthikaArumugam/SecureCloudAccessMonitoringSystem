@@ -4,6 +4,7 @@ venv/
 # Python
 __pycache__/
 *.pyc
+*.pkl
 
 # VS Code
 .vscode/
@@ -13,6 +14,7 @@ __pycache__/
 
 # Database
 database.db
+*.db
 
 # Environment Variables
 .env

@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}Incidents — Secure Cloud Access Monitoring{% endblock %}
+
+{% block head %}
+<style>
+  .incidents-container {
+    background: linear-gradient(to bottom, rgba(7, 17, 31, 0.5), rgba(13, 45, 61, 0.3));
+    border: 1px solid rgba(26, 90, 122, 0.3);
+    border-radius: 8px;
+    padding: 25px;
+  }
+  .filter-panel {
+    background: linear-gradient(135deg, #0f3a4d 0%, #0d2d3d 100%);
+    border: 1px solid #1a5a7a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+  .filter-group {
+    margin-bottom: 15px;
+  }
+  .filter-group label {
+    color: #a0a9b8;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-control, .form-select {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 157, 0.2);
+    color: #ffffff;
+  }
+  .form-control:focus, .form-select:focus {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: #00ff9d;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 255, 157, 0.25);
+  }
+  .form-select option {
+    background: #0d2d3d;
+    color: #ffffff;
+  }
+  .incident-card {
+    background: rgba(15, 58, 77, 0.3);
+    border: 1px solid rgba(26, 90, 122, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .incident-card:hover {
+    background: rgba(15, 58, 77, 0.5);
+    border-color: rgba(0, 255, 157, 0.3);
+    transform: translateX(4px);
+    color: inherit;
+  }
+  .incident-card.critical {
+    border-left: 4px solid #ff1a4d;
+  }
+  .incident-card.high {
+    border-left: 4px solid #ff9500;
+  }
+  .incident-card.medium {
+    border-left: 4px solid #ffb400;
+  }
+  .incident-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 15px;
+  }
+  .incident-id {
+    color: #00ff9d;
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-family: 'Courier New', monospace;
+  }
+  .incident-title {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+  .incident-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-critical {
+    background: rgba(255, 26, 77, 0.2);
+    color: #ff1a4d;
+  }
+  .badge-high {
+    background: rgba(255, 149, 0, 0.2);
+    color: #ff9500;
+  }
+  .badge-medium {
+    background: rgba(255, 180, 0, 0.2);
+    color: #ffb400;
+  }
+  .badge-open {
+    background: rgba(255, 180, 0, 0.2);
+    color: #ffb400;
+  }
+  .badge-investigating {
+    background: rgba(0, 180, 216, 0.2);
+    color: #00b4d8;
+  }
+  .badge-resolved {
+    background: rgba(0, 255, 157, 0.2);
+    color: #00ff9d;
+  }
+  .badge-false-positive {
+    background: rgba(128, 128, 128, 0.2);
+    color: #a0a9b8;
+  }
+  .incident-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .meta-label {
+    color: #a0a9b8;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .meta-value {
+    color: #ffffff;
+    font-weight: 500;
+  }
+  .incident-description {
+    color: #c0c7d0;
+    font-size: 0.9rem;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .no-incidents {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a0a9b8;
+  }
+  .no-incidents i {
+    font-size: 4rem;
+    color: #00ff9d;
+    opacity: 0.3;
+    margin-bottom: 20px;
+  }
+  .results-info {
+    color: #a0a9b8;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+  }
+  .pagination-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+  }
+  .pagination-nav a, .pagination-nav span {
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 255, 157, 0.2);
+    border-radius: 4px;
+    color: #a0a9b8;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+  .pagination-nav a:hover {
+    background: rgba(0, 255, 157, 0.1);
+    border-color: #00ff9d;
+    color: #00ff9d;
+  }
+  .pagination-nav .current {
+    background: rgba(0, 255, 157, 0.2);
+    border-color: #00ff9d;
+    color: #00ff9d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="display-4 fw-bold mb-2">
+        <i class="bi bi-exclamation-triangle" style="color: #ff1a4d;"></i> Incidents
+      </h1>
+      <p class="lead text-muted">Track and investigate security incidents</p>
+    </div>
+  </div>
+
+  <div class="incidents-container">
+    <!-- Filters -->
+    <div class="filter-panel">
+      <h5 class="mb-4">Filter Incidents</h5>
+      <form method="GET" class="row g-3">
+        <div class="col-md-4">
+          <div class="filter-group">
+            <label for="severity">Severity</label>
+            <select class="form-select" name="severity" id="severity">
+              <option value="">All Severities</option>
+              <option value="CRITICAL" {% if filter_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
+              <option value="HIGH" {% if filter_severity == 'HIGH' %}selected{% endif %}>High</option>
+              <option value="MEDIUM" {% if filter_severity == 'MEDIUM' %}selected{% endif %}>Medium</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="filter-group">
+            <label for="status">Status</label>
+            <select class="form-select" name="status" id="status">
+              <option value="">All Statuses</option>
+              <option value="OPEN" {% if filter_status == 'OPEN' %}selected{% endif %}>Open</option>
+              <option value="INVESTIGATING" {% if filter_status == 'INVESTIGATING' %}selected{% endif %}>Investigating</option>
+              <option value="RESOLVED" {% if filter_status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+              <option value="FALSE_POSITIVE" {% if filter_status == 'FALSE_POSITIVE' %}selected{% endif %}>False Positive</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="filter-group">
+            <label for="application_id">Application</label>
+            <select class="form-select" name="application_id" id="application_id">
+              <option value="">All Applications</option>
+              {% for app in applications %}
+                <option value="{{ app }}" {% if filter_application_id == app %}selected{% endif %}>
+                  {{ app }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search"></i> Filter Incidents
+          </button>
+          <a href="{{ url_for('incidents') }}" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-arrow-clockwise"></i> Clear Filters
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+      Showing <strong>{{ (page-1) * 20 + 1 }}</strong>–<strong>{{ [page * 20, total] | min }}</strong> of <strong>{{ total }}</strong> incidents
+    </div>
+
+    <!-- Incidents List -->
+    {% if incidents %}
+      <div class="incidents-list">
+        {% for incident in incidents %}
+          <a href="{{ url_for('incident_detail', incident_id=incident.incident_id) }}" class="incident-card {% if incident.severity == 'CRITICAL' %}critical{% elif incident.severity == 'HIGH' %}high{% else %}medium{% endif %}">
+            <div class="incident-header">
+              <div style="flex-grow: 1;">
+                <div class="incident-id">{{ incident.incident_id }}</div>
+                <div class="incident-title">{{ incident.title }}</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                <span class="incident-badge badge-{{ incident.severity | lower }}">
+                  {% if incident.severity == 'CRITICAL' %}
+                    <i class="bi bi-fire"></i>
+                  {% elif incident.severity == 'HIGH' %}
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                  {% else %}
+                    <i class="bi bi-exclamation-circle"></i>
+                  {% endif %}
+                  {{ incident.severity }}
+                </span>
+                <span class="incident-badge badge-{{ incident.status | lower | replace('_', '-') }}">
+                  {% if incident.status == 'OPEN' %}
+                    <i class="bi bi-hourglass-split"></i>
+                  {% elif incident.status == 'INVESTIGATING' %}
+                    <i class="bi bi-binoculars"></i>
+                  {% elif incident.status == 'RESOLVED' %}
+                    <i class="bi bi-check-circle"></i>
+                  {% else %}
+                    <i class="bi bi-check2"></i>
+                  {% endif %}
+                  {{ incident.status }}
+                </span>
+              </div>
+            </div>
+
+            {% if incident.description %}
+              <div class="incident-description">
+                {{ incident.description[:150] }}{% if incident.description | length > 150 %}...{% endif %}
+              </div>
+            {% endif %}
+
+            <div class="incident-meta">
+              <div class="meta-item">
+                <span class="meta-label">Username</span>
+                <span class="meta-value"><i class="bi bi-person"></i> {{ incident.username }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Application</span>
+                <span class="meta-value"><i class="bi bi-cloud"></i> {{ incident.application_id }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Created</span>
+                <span class="meta-value">{{ incident.created_at[:10] }}</span>
+              </div>
+              {% if incident.assigned_to %}
+                <div class="meta-item">
+                  <span class="meta-label">Assigned To</span>
+                  <span class="meta-value"><i class="bi bi-person-badge"></i> {{ incident.assigned_to }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+        <div class="pagination-nav">
+          {% if page > 1 %}
+            <a href="?page=1{% if filter_severity %}&severity={{ filter_severity }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_application_id %}&application_id={{ filter_application_id }}{% endif %}">
+              <i class="bi bi-chevron-double-left"></i>
+            </a>
+            <a href="?page={{ page-1 }}{% if filter_severity %}&severity={{ filter_severity }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_application_id %}&application_id={{ filter_application_id }}{% endif %}">
+              <i class="bi bi-chevron-left"></i> Previous
+            </a>
+          {% endif %}
+
+          {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+              <span class="current">{{ p }}</span>
+            {% elif total_pages <= 10 or (p >= page - 2 and p <= page + 2) %}
+              <a href="?page={{ p }}{% if filter_severity %}&severity={{ filter_severity }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_application_id %}&application_id={{ filter_application_id }}{% endif %}">
+                {{ p }}
+              </a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page < total_pages %}
+            <a href="?page={{ page+1 }}{% if filter_severity %}&severity={{ filter_severity }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_application_id %}&application_id={{ filter_application_id }}{% endif %}">
+              Next <i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="?page={{ total_pages }}{% if filter_severity %}&severity={{ filter_severity }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_application_id %}&application_id={{ filter_application_id }}{% endif %}">
+              <i class="bi bi-chevron-double-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="no-incidents">
+        <i class="bi bi-check2-circle"></i>
+        <h5>No incidents found</h5>
+        <p>All systems operating normally or try adjusting your filters</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

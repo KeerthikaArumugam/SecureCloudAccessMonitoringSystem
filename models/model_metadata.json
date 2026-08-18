@@ -1,0 +1,55 @@
+{
+  "version": "v1.4",
+  "algorithm": "RandomForest + Isotonic Calibration",
+  "dataset_source": "dataset/logon.csv (synthetic local authentication log)",
+  "target_definition": "Synthetic time-heuristic suspicious label used for local evaluation only; not treated as ground-truth cyberattack behavior.",
+  "split_strategy": "Train/validation/test split with stratification and explicit leakage checks; the intended real-world strategy is chronological, user-aware splitting for future behavior evaluation.",
+  "calibration_method": "Isotonic calibration on the supervised model output; Brier score used to assess probability calibration.",
+  "features": [
+    "user",
+    "pc",
+    "activity",
+    "day",
+    "month"
+  ],
+  "feature_count": 5,
+  "train_samples": 598379,
+  "validation_samples": 128251,
+  "test_samples": 128229,
+  "train_date": "2026-08-16 22:41",
+  "label_type": "synthetic (time-heuristic)",
+  "thresholds": {
+    "medium": 30.0,
+    "high": 55.00000000000001
+  },
+  "risk_thresholds": {
+    "LOW": "0-29",
+    "MEDIUM": "30-54",
+    "HIGH": "55-100"
+  },
+  "design_note": "The model is trained on non-leaky behavioural features; the risk score is derived from the calibrated suspicious probability plus behavioural factors available at login time.",
+  "metrics": {
+    "accuracy": 0.9565,
+    "precision": 0.4444,
+    "recall": 0.0007,
+    "f1": 0.0014,
+    "roc_auc": 0.9248,
+    "brier_score": 0.0339
+  },
+  "anomaly_model": {
+    "name": "IsolationForest",
+    "contamination": 0.05,
+    "roc_auc": 0.5059,
+    "notes": "This unsupervised model is used for behavioural anomaly comparison only; the primary runtime risk remains the calibrated supervised classifier."
+  },
+  "confusion_matrix": [
+    [
+      122648,
+      5
+    ],
+    [
+      5572,
+      4
+    ]
+  ]
+}

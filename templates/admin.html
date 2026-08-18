@@ -1,135 +1,171 @@
-{% extends "base.html" %}
-
-{% block title %}Admin Panel{% endblock %}
-
-{% block content %}
-
-<div class="container mt-5">
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">
-            Logout
-        </a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
     </div>
-
-    <h2>Admin Dashboard</h2>
-    <hr>
-
-    <div class="row">
-
-        <!-- Total Users -->
-        <div class="col-md-3">
-            <div class="card p-3 shadow text-center">
-                <h5>Total Users</h5>
-                <h2>{{ total_users }}</h2>
-            </div>
-        </div>
-
-        <!-- Total Logins -->
-        <div class="col-md-3">
-            <div class="card p-3 shadow text-center">
-                <h5>Total Logins</h5>
-                <h2>{{ total_logins }}</h2>
-            </div>
-        </div>
-
-        <!-- High Risk -->
-        <div class="col-md-3">
-            <div class="card p-3 shadow text-center">
-                <h5>High Risk Logins</h5>
-                <h2>{{ high_risk }}</h2>
-            </div>
-        </div>
-
-        <!-- Locked Accounts -->
-        <div class="col-md-3">
-            <div class="card p-3 shadow text-center">
-                <h5>Locked Accounts</h5>
-                <h2>{{ locked_accounts }}</h2>
-            </div>
-        </div>
-
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Admin</span>
+      <a href="{{ url_for('admin') }}" class="sidebar-item active"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
+      <a href="{{ url_for('audit_logs') }}" class="sidebar-item"><i class="bi bi-journal-text"></i><span>Audit Logs</span></a>
+      <a href="{{ url_for('model_performance') }}" class="sidebar-item"><i class="bi bi-graph-up-arrow"></i><span>Model Performance</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
     </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-shield-lock me-2" style="color:var(--cyan);"></i>Admin Panel</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">A</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">admin</span>
+    </header>
+    <main class="dash-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}
+      {% endwith %}
 
-    <br><br>
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:700;margin:0;">Admin Dashboard</h2>
+          <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">System overview and user management</p>
+        </div>
+      </div>
 
-    <h3>Registered Users</h3>
-
-    <table class="table table-bordered table-striped">
-
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Failed Attempts</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-        {% for user in users %}
-
-        <tr>
-
-            <td>{{ user["id"] }}</td>
-
-            <td>{{ user["username"] }}</td>
-
-            <td>{{ user["email"] }}</td>
-
-            <td>{{ user["failed_attempts"] }}</td>
-
-            <td>
-
-                {% if user["account_locked"] == 1 %}
-
-                    <span class="badge bg-danger">
-                        Locked
-                    </span>
-
-                {% else %}
-
-                    <span class="badge bg-success">
-                        Active
-                    </span>
-
-                {% endif %}
-
-            </td>
-
-            <td>
-
-                {% if user["account_locked"] == 1 %}
-
-                <a href="{{ url_for('unlock_user', user_id=user['id']) }}"
-                   class="btn btn-success btn-sm">
-
-                    Unlock
-
-                </a>
-
-                {% else %}
-
-                <button class="btn btn-secondary btn-sm" disabled>
-
-                    Active
-
-                </button>
-
-                {% endif %}
-
-            </td>
-
-        </tr>
-
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        {% set stats = [
+          ('Total Users',     total_users,       'bi-people-fill',              'blue',     ''),
+          ('Total Logins',    total_logins,      'bi-box-arrow-in-right',       'cyan',     ''),
+          ('High Risk',       high_risk,         'bi-fire',                     'red',      ''),
+          ('Suspicious',      suspicious_logins, 'bi-exclamation-triangle-fill','orange',   ''),
+          ('Locked Accounts', locked_accounts,   'bi-lock-fill',                'red',      ''),
+          ('Active Alerts',   active_alerts,     'bi-bell-fill',                'green',    ''),
+        ] %}
+        {% for label, value, icon, color, _ in stats %}
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="stat-card text-center">
+            <div class="stat-icon mx-auto mb-2" style="background:rgba(56,189,248,.1);color:var(--{{ color }});"><i class="bi {{ icon }}"></i></div>
+            <div class="stat-value" data-count="{{ value }}">0</div>
+            <div class="stat-label">{{ label }}</div>
+          </div>
+        </div>
         {% endfor %}
+      </div>
 
-        </tbody>
+      <!-- Quick navigation cards -->
+      <div class="row g-3 mb-4">
+        {% set pages = [
+          ('Threat Detection', 'threat_detection', 'shield-exclamation', 'red',      'Investigate HIGH/MEDIUM logins'),
+          ('Security Alerts',  'security_alerts',  'bell-fill',          'orange',   'View and resolve system alerts'),
+          ('Login Activity',   'login_activity',   'clock-history',      'cyan',     'Paginated login history'),
+          ('Analytics',        'analytics',        'bar-chart-fill',     'blue',     'Charts and security insights'),
+          ('Audit Logs',       'audit_logs',       'journal-text',       'glow-blue','Full admin action trail'),
+          ('Model Performance','model_performance','graph-up-arrow',     'green',    'AI accuracy and metrics'),
+        ] %}
+        {% for name, endpoint, icon, color, desc in pages %}
+        <div class="col-xl-2 col-md-4 col-6">
+          <a href="{{ url_for(endpoint) }}" style="text-decoration:none;">
+            <div class="dash-panel text-center" style="padding:20px;cursor:pointer;transition:all .3s;"
+                 onmouseover="this.style.borderColor='rgba(56,189,248,.5)';this.style.transform='translateY(-4px)'"
+                 onmouseout="this.style.borderColor='rgba(56,189,248,.15)';this.style.transform='none'">
+              <i class="bi bi-{{ icon }}" style="font-size:1.8rem;color:var(--{{ color }});display:block;margin-bottom:8px;"></i>
+              <div style="font-size:.82rem;font-weight:600;color:var(--white);">{{ name }}</div>
+              <div style="font-size:.72rem;color:var(--gray);margin-top:4px;">{{ desc }}</div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
 
-    </table>
-
+      <!-- User management -->
+      <div class="dash-panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="bi bi-people-fill"></i>Registered Users</span>
+          <span style="font-size:.78rem;color:var(--gray);">{{ total_users }} users</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead>
+              <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>AI</th><th>Failed</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr>
+                <td style="color:var(--gray);">{{ user['id'] }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;">{{ user['username'][0]|upper }}</div>
+                    <span style="font-size:.85rem;">{{ user['username'] }}</span>
+                  </div>
+                </td>
+                <td style="font-size:.82rem;color:var(--gray);">{{ user['email'] }}</td>
+                <td>
+                  {% if user['role'] == 'admin' %}
+                    <span style="background:rgba(239,68,68,.12);color:var(--red);padding:2px 8px;border-radius:4px;font-size:.78rem;font-weight:600;">admin</span>
+                  {% else %}
+                    <span style="background:rgba(56,189,248,.1);color:var(--cyan);padding:2px 8px;border-radius:4px;font-size:.78rem;">user</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if user['ai_enabled'] == 1 %}<span class="status-badge status-success">On</span>
+                  {% else %}<span class="status-badge" style="background:rgba(100,116,139,.15);color:var(--gray);">Off</span>{% endif %}
+                </td>
+                <td style="font-size:.82rem;color:{% if user['failed_attempts'] >= 2 %}var(--red){% else %}var(--gray){% endif %};">{{ user['failed_attempts'] }}</td>
+                <td>
+                  {% if user['account_locked'] == 1 %}<span class="status-badge status-failed">Locked</span>
+                  {% else %}<span class="status-badge status-success">Active</span>{% endif %}
+                </td>
+                <td>
+                  {% if user['account_locked'] == 1 %}
+                    <a href="{{ url_for('unlock_user', user_id=user['id']) }}" class="btn-outline-cyber" style="padding:5px 12px;font-size:.75rem;border-radius:8px;">
+                      <i class="bi bi-unlock-fill me-1"></i>Unlock
+                    </a>
+                  {% else %}<span style="font-size:.78rem;color:var(--gray);">—</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
-
-{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+  document.querySelectorAll('.stat-value[data-count]').forEach(el=>{
+    const target=parseInt(el.dataset.count);
+    const t0=performance.now();
+    function up(now){const t=Math.min((now-t0)/1200,1);el.textContent=Math.round(target*(1-Math.pow(1-t,3)));if(t<1)requestAnimationFrame(up);}
+    requestAnimationFrame(up);
+  });
+</script>
+</body>
+</html>

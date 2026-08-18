@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threat Investigation — Secure Cloud AI Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+<div class="dash-wrapper">
+  <aside class="dash-sidebar" id="dashSidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-shield-lock-fill brand-icon"></i>
+      <div class="brand-text">Secure Cloud<span>AI Monitoring System</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Main</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item active"><i class="bi bi-shield-exclamation"></i><span>Threat Detection</span></a>
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item"><i class="bi bi-cpu-fill"></i><span>AI Prediction</span></a>
+      <span class="sidebar-section-label">Security</span>
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item"><i class="bi bi-bell-fill"></i><span>Security Alerts</span></a>
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item"><i class="bi bi-clock-history"></i><span>Login Activity</span></a>
+      <a href="{{ url_for('analytics') }}" class="sidebar-item"><i class="bi bi-bar-chart-fill"></i><span>Analytics</span></a>
+      <span class="sidebar-section-label">Admin</span>
+      <a href="{{ url_for('admin') }}" class="sidebar-item"><i class="bi bi-shield-lock"></i><span>Admin Panel</span></a>
+      <a href="{{ url_for('audit_logs') }}" class="sidebar-item"><i class="bi bi-journal-text"></i><span>Audit Logs</span></a>
+    </nav>
+    <div class="sidebar-logout">
+      <a href="{{ url_for('logout') }}" class="sidebar-item" style="color:var(--red);"><i class="bi bi-box-arrow-left" style="color:var(--red);"></i><span>Logout</span></a>
+    </div>
+  </aside>
+  <div class="dash-main" id="dashMain">
+    <header class="dash-topbar">
+      <button class="topbar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <span class="topbar-title"><i class="bi bi-search me-2" style="color:var(--cyan);"></i>Threat Investigation</span>
+      <span class="live-clock" id="liveClock"></span>
+      <div class="user-avatar">A</div>
+      <span class="d-none d-lg-block" style="font-size:.85rem;font-weight:600;">admin</span>
+    </header>
+    <main class="dash-content">
+      <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <a href="{{ url_for('threat_detection') }}" class="btn-outline-cyber" style="padding:7px 16px;font-size:.83rem;border-radius:8px;">
+          <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        <div>
+          <h2 style="font-size:1.4rem;font-weight:700;margin:0;">Threat Investigation — Log #{{ log['id'] }}</h2>
+          <p style="color:var(--gray);font-size:.82rem;margin:4px 0 0;">Full analysis for {{ log['username'] }} login event</p>
+        </div>
+      </div>
+
+      <!-- Recommendation Banner -->
+      {% set risk = log['risk'] %}
+      <div class="dash-panel mb-4" style="border-color:{% if risk=='HIGH' %}rgba(239,68,68,.5){% elif risk=='MEDIUM' %}rgba(245,158,11,.5){% else %}rgba(16,185,129,.5){% endif %};">
+        <div class="panel-body d-flex align-items-center gap-3">
+          <i class="bi bi-{% if risk=='HIGH' %}exclamation-triangle-fill{% elif risk=='MEDIUM' %}exclamation-circle-fill{% else %}shield-fill-check{% endif %}"
+             style="font-size:2rem;color:{% if risk=='HIGH' %}var(--red){% elif risk=='MEDIUM' %}var(--orange){% else %}var(--green){% endif %};flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--white);">
+              Recommended Action
+            </div>
+            <div style="font-size:.85rem;color:var(--gray);">{{ recommendation }}</div>
+          </div>
+          <div class="ms-auto">
+            {% if risk=='HIGH' %}<span class="status-badge status-failed" style="font-size:.85rem;padding:6px 16px;">HIGH RISK</span>
+            {% elif risk=='MEDIUM' %}<span class="status-badge status-warning" style="font-size:.85rem;padding:6px 16px;">MEDIUM RISK</span>
+            {% else %}<span class="status-badge status-success" style="font-size:.85rem;padding:6px 16px;">LOW RISK</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <!-- Login Event Details -->
+        <div class="col-lg-6">
+          <div class="dash-panel h-100">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-info-circle-fill"></i>Login Event Details</span></div>
+            <div class="panel-body">
+              {% set fields = [
+                ('User', log['username']),
+                ('IP Address', log['ip_address']),
+                ('Device', log['device']),
+                ('Browser', log['browser']),
+                ('Date', log['login_date']),
+                ('Time', log['login_time']),
+                ('Prediction', log['prediction']),
+                ('Threat Score', log['threat_score']),
+                ('Confidence', (log['confidence']|string) + '%'),
+                ('AI Enabled', 'Yes' if log['ai_enabled'] else 'No'),
+                ('Known IP', 'Yes' if log['is_known_ip'] else 'No'),
+                ('Known Device', 'Yes' if log['is_known_device'] else 'No'),
+              ] %}
+              {% for label, value in fields %}
+              <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <span style="font-size:.83rem;color:var(--gray);">{{ label }}</span>
+                <span style="font-size:.85rem;font-weight:600;color:var(--white);">{{ value or '—' }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Factors + User Stats -->
+        <div class="col-lg-6">
+          <div class="dash-panel mb-3">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-exclamation-triangle-fill" style="color:var(--orange);"></i>Risk Factors</span></div>
+            <div class="panel-body">
+              {% if reasons %}
+                {% for r in reasons %}
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <i class="bi bi-arrow-right-circle-fill" style="color:var(--cyan);flex-shrink:0;"></i>
+                  <span style="font-size:.85rem;color:var(--white);">{{ r }}</span>
+                </div>
+                {% endfor %}
+              {% else %}
+                <p style="color:var(--gray);font-size:.85rem;">No specific risk factors recorded.</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="dash-panel">
+            <div class="panel-header"><span class="panel-title"><i class="bi bi-person-fill"></i>User Statistics</span></div>
+            <div class="panel-body">
+              {% if user_stats %}
+              <div class="row g-3 text-center">
+                <div class="col-6">
+                  <div style="font-size:1.4rem;font-weight:700;color:var(--cyan);">{{ user_stats['total_logins'] or 0 }}</div>
+                  <div style="font-size:.75rem;color:var(--gray);">Total Logins</div>
+                </div>
+                <div class="col-6">
+                  <div style="font-size:1.4rem;font-weight:700;color:var(--red);">{{ total_suspicious }}</div>
+                  <div style="font-size:.75rem;color:var(--gray);">Suspicious Events</div>
+                </div>
+                <div class="col-6">
+                  <div style="font-size:1.4rem;font-weight:700;color:var(--orange);">{{ user_stats['failed_attempts'] or 0 }}</div>
+                  <div style="font-size:.75rem;color:var(--gray);">Failed Attempts</div>
+                </div>
+                <div class="col-6">
+                  <div style="font-size:.78rem;font-weight:600;color:var(--white);">{{ user_stats['last_login_ip'] or '—' }}</div>
+                  <div style="font-size:.75rem;color:var(--gray);">Last Known IP</div>
+                </div>
+              </div>
+              {% else %}<p style="color:var(--gray);">User stats unavailable.</p>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Previous 5 Logins -->
+      <div class="dash-panel mb-4">
+        <div class="panel-header"><span class="panel-title"><i class="bi bi-clock-history"></i>Previous 5 Logins ({{ log['username'] }})</span></div>
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead><tr><th>#</th><th>Date</th><th>Time</th><th>IP</th><th>Device</th><th>Browser</th><th>Prediction</th><th>Risk</th><th>Threat Score</th></tr></thead>
+            <tbody>
+              {% if prev_logins %}
+                {% for p in prev_logins %}
+                <tr>
+                  <td style="color:var(--gray);">{{ loop.index }}</td>
+                  <td style="font-size:.78rem;color:var(--gray);">{{ p['login_date'] or '—' }}</td>
+                  <td style="font-size:.78rem;color:var(--gray);">{{ p['login_time'] or '—' }}</td>
+                  <td style="font-family:monospace;font-size:.78rem;color:var(--cyan);">{{ p['ip_address'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ p['device'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ p['browser'] or '—' }}</td>
+                  <td style="font-size:.8rem;">{{ p['prediction'] or '—' }}</td>
+                  <td>{% if p['risk']=='HIGH' %}<span class="status-badge status-failed">HIGH</span>{% elif p['risk']=='MEDIUM' %}<span class="status-badge status-warning">MEDIUM</span>{% else %}<span class="status-badge status-success">LOW</span>{% endif %}</td>
+                  <td style="font-weight:600;color:{% if (p['threat_score']|float) >= 71 %}var(--red){% elif (p['threat_score']|float) >= 31 %}var(--orange){% else %}var(--green){% endif %};">{{ p['threat_score'] or 0 }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="9" style="text-align:center;padding:20px;color:var(--gray);">No previous logins found.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Audit Trail -->
+      <div class="dash-panel">
+        <div class="panel-header"><span class="panel-title"><i class="bi bi-journal-text"></i>User Audit Trail (last 20)</span></div>
+        <div style="overflow-x:auto;">
+          <table class="activity-table">
+            <thead><tr><th>#</th><th>Action</th><th>Timestamp</th><th>IP</th><th>Description</th></tr></thead>
+            <tbody>
+              {% if audit_trail %}
+                {% for a in audit_trail %}
+                <tr>
+                  <td style="color:var(--gray);">{{ loop.index }}</td>
+                  <td><span style="background:rgba(56,189,248,.1);color:var(--cyan);padding:2px 8px;border-radius:4px;font-size:.78rem;">{{ a['action'] }}</span></td>
+                  <td style="font-size:.78rem;color:var(--gray);white-space:nowrap;">{{ a['timestamp'] }}</td>
+                  <td style="font-family:monospace;font-size:.78rem;color:var(--cyan);">{{ a['ip_address'] or '—' }}</td>
+                  <td style="font-size:.78rem;color:var(--gray);">{{ a['description'] or '—' }}</td>
+                </tr>
+                {% endfor %}
+              {% else %}
+              <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray);">No audit records found.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  setTimeout(()=>{const w=document.querySelector('.loading-bar-wrap');if(w){w.style.opacity='0';w.style.transition='opacity .5s';setTimeout(()=>w.remove(),500);}},1000);
+  function tick(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+  document.getElementById('sidebarToggle').addEventListener('click',()=>{document.getElementById('dashSidebar').classList.toggle('collapsed');document.getElementById('dashMain').classList.toggle('expanded');});
+</script>
+</body>
+</html>
