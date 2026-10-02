@@ -37,32 +37,32 @@
     <nav class="sidebar-nav">
       <span class="sidebar-section-label">Main</span>
 
-      <a href="#overview"  class="sidebar-item active" data-section="overview">
+      <a href="{{ url_for('dashboard') }}" class="sidebar-item active" aria-current="page">
         <i class="bi bi-speedometer2"></i>
         <span>Dashboard</span>
       </a>
-      <a href="#threats"   class="sidebar-item" data-section="threats">
+      <a href="{{ url_for('threat_detection') }}" class="sidebar-item">
         <i class="bi bi-shield-exclamation"></i>
         <span>Threat Detection</span>
         <span class="item-badge">3</span>
       </a>
-      <a href="#ai"        class="sidebar-item" data-section="ai">
+      <a href="{{ url_for('ai_prediction') }}" class="sidebar-item">
         <i class="bi bi-cpu-fill"></i>
         <span>AI Prediction</span>
       </a>
 
       <span class="sidebar-section-label">Security</span>
 
-      <a href="#alerts"    class="sidebar-item" data-section="alerts">
+      <a href="{{ url_for('security_alerts') }}" class="sidebar-item">
         <i class="bi bi-bell-fill"></i>
         <span>Security Alerts</span>
         <span class="item-badge">7</span>
       </a>
-      <a href="#activity"  class="sidebar-item" data-section="activity">
+      <a href="{{ url_for('login_activity') }}" class="sidebar-item">
         <i class="bi bi-clock-history"></i>
         <span>Login Activity</span>
       </a>
-      <a href="#analytics" class="sidebar-item" data-section="analytics">
+      <a href="{{ url_for('analytics') }}" class="sidebar-item">
         <i class="bi bi-bar-chart-fill"></i>
         <span>Analytics</span>
       </a>

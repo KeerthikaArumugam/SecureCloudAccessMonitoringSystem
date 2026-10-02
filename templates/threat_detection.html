@@ -119,7 +119,7 @@
                     {% if reasons %}{{ reasons[0] }}{% if reasons|length > 1 %} <em style="color:var(--cyan);">(+{{ reasons|length - 1 }} more)</em>{% endif %}{% else %}—{% endif %}
                   </td>
                   <td>
-                    <a href="{{ url_for('investigate', log_id=log['id']) }}" class="btn-outline-cyber" style="padding:5px 12px;font-size:.75rem;border-radius:8px;">
+                    <a href="{{ url_for('investigate', alert_id=log['id']) }}" class="btn-outline-cyber" style="padding:5px 12px;font-size:.75rem;border-radius:8px;">
                       <i class="bi bi-search me-1"></i>Investigate
                     </a>
                   </td>

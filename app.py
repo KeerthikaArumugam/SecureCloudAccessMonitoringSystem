@@ -57,6 +57,20 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 1800
 app.config["API_RATE_LIMIT_PER_MINUTE"] = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "100"))
 
 
+def _from_json(value):
+    """Decode JSON stored in a database field without breaking the page."""
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+        return parsed if isinstance(parsed, list) else []
+    except (TypeError, ValueError):
+        return []
+
+
+app.jinja_env.filters["from_json"] = _from_json
+
+
 def load_mail_config(flask_app=None):
     """(Re)load mail configuration from environment variables into Flask app config."""
     target_app = flask_app or app
@@ -1010,7 +1024,20 @@ def threat_detection():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("threat_detection.html")
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    today_suspicious = conn.execute(
+        "SELECT COUNT(*) FROM login_logs WHERE login_date=date('now') AND risk IN ('HIGH','MEDIUM')"
+    ).fetchone()[0]
+    all_time_high = conn.execute(
+        "SELECT COUNT(*) FROM login_logs WHERE risk='HIGH'"
+    ).fetchone()[0]
+    logs = conn.execute(
+        "SELECT * FROM login_logs WHERE risk IN ('HIGH','MEDIUM') ORDER BY id DESC LIMIT 20"
+    ).fetchall()
+    conn.close()
+    return render_template("threat_detection.html", logs=logs,
+                           today_suspicious=today_suspicious, all_time_high=all_time_high)
 
 
 @app.route("/ai-prediction")
@@ -1018,7 +1045,23 @@ def ai_prediction():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("ai_prediction.html")
+    username = session["username"]
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    user = conn.execute("SELECT ai_enabled FROM users WHERE username=?", (username,)).fetchone()
+    latest = conn.execute(
+        "SELECT prediction, risk, threat_score, confidence, reasons FROM login_logs WHERE username=? ORDER BY id DESC LIMIT 1",
+        (username,),
+    ).fetchone()
+    conn.close()
+    prediction = None
+    if latest:
+        prediction = dict(latest)
+        prediction["prediction"] = prediction.pop("prediction") or "Normal Login"
+        prediction["risk"] = prediction["risk"] or "LOW"
+        prediction["reasons"] = _from_json(prediction["reasons"])
+    return render_template("ai_prediction.html", username=username,
+                           ai_enabled=user["ai_enabled"] if user else 0, prediction=prediction)
 
 
 @app.route("/security-alerts")
@@ -1026,7 +1069,32 @@ def security_alerts():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("security_alerts.html")
+    status = request.args.get("status", "All")
+    allowed_statuses = {"All", "New", "Investigating", "Resolved"}
+    if status not in allowed_statuses:
+        status = "All"
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    if status == "All":
+        alerts = conn.execute("SELECT * FROM security_alerts ORDER BY COALESCE(created_at, alert_time) DESC LIMIT 100").fetchall()
+    else:
+        alerts = conn.execute("SELECT * FROM security_alerts WHERE status=? ORDER BY COALESCE(created_at, alert_time) DESC LIMIT 100", (status,)).fetchall()
+    conn.close()
+    return render_template("security_alerts.html", alerts=alerts, filter_status=status,
+                           is_admin=_is_admin())
+
+
+@app.route("/security-alerts/<int:alert_id>/resolve", methods=["POST"])
+def resolve_alert(alert_id):
+    if not _is_admin():
+        flash("Administrator privileges are required to resolve alerts.", "error")
+        return redirect(url_for("security_alerts"))
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE security_alerts SET status='Resolved', resolved_at=datetime('now') WHERE id=?", (alert_id,))
+    conn.commit()
+    conn.close()
+    flash("Alert resolved.", "success")
+    return redirect(url_for("security_alerts"))
 
 
 @app.route("/login-activity")
@@ -1034,7 +1102,33 @@ def login_activity():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("login_activity.html")
+    page = max(1, request.args.get("page", 1, type=int))
+    per_page = 20
+    search_user = request.args.get("search_user", "").strip()
+    search_ip = request.args.get("search_ip", "").strip()
+    filter_status = request.args.get("status", "All")
+    conditions, params = [], []
+    if search_user:
+        conditions.append("username LIKE ?"); params.append(f"%{search_user}%")
+    if search_ip:
+        conditions.append("ip_address LIKE ?"); params.append(f"%{search_ip}%")
+    if filter_status == "Normal":
+        conditions.append("risk='LOW'")
+    elif filter_status == "Suspicious":
+        conditions.append("risk='MEDIUM'")
+    elif filter_status == "High Risk":
+        conditions.append("risk='HIGH'")
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    total_rows = conn.execute("SELECT COUNT(*) FROM login_logs" + where, params).fetchone()[0]
+    logs = conn.execute("SELECT * FROM login_logs" + where + " ORDER BY id DESC LIMIT ? OFFSET ?",
+                        params + [per_page, (page - 1) * per_page]).fetchall()
+    conn.close()
+    total_pages = max(1, (total_rows + per_page - 1) // per_page)
+    return render_template("login_activity.html", logs=logs, total_rows=total_rows, page=page,
+                           total_pages=total_pages, filter_status=filter_status,
+                           search_user=search_user, search_ip=search_ip)
 
 
 @app.route("/analytics")
@@ -1042,7 +1136,31 @@ def analytics():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("analytics.html")
+    conn = sqlite3.connect(DB_PATH)
+    daily = conn.execute("SELECT login_date, COUNT(*) FROM login_logs WHERE login_date >= date('now','-6 days') GROUP BY login_date ORDER BY login_date").fetchall()
+    daily_map = dict(daily)
+    date_rows = conn.execute("SELECT date('now', '-' || n || ' days') FROM (SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) ORDER BY 1").fetchall()
+    labels = [row[0] for row in date_rows]
+    daily_counts = [daily_map.get(day, 0) for day in labels]
+    risk_rows = conn.execute("SELECT COALESCE(risk,'LOW'), COUNT(*) FROM login_logs GROUP BY risk").fetchall()
+    risk_data = {"LOW": 0, "MEDIUM": 0, "HIGH": 0}
+    risk_data.update({str(risk).upper(): count for risk, count in risk_rows if str(risk).upper() in risk_data})
+    device_rows = conn.execute("SELECT COALESCE(device,'Unknown'), COUNT(*) FROM login_logs GROUP BY device ORDER BY 2 DESC").fetchall()
+    browser_rows = conn.execute("SELECT COALESCE(browser,'Unknown'), COUNT(*) FROM login_logs GROUP BY browser ORDER BY 2 DESC").fetchall()
+    hour_rows = conn.execute("SELECT CAST(substr(login_time,1,2) AS INTEGER), COUNT(*) FROM login_logs WHERE login_time GLOB '[0-2][0-9]:*' GROUP BY 1").fetchall()
+    suspicious_rows = conn.execute("SELECT login_date, COUNT(*) FROM login_logs WHERE risk IN ('HIGH','MEDIUM') AND login_date >= date('now','-6 days') GROUP BY login_date").fetchall()
+    normal_rows = conn.execute("SELECT login_date, COUNT(*) FROM login_logs WHERE risk='LOW' AND login_date >= date('now','-6 days') GROUP BY login_date").fetchall()
+    conn.close()
+    suspicious_map, normal_map = dict(suspicious_rows), dict(normal_rows)
+    return render_template("analytics.html", daily_labels=json.dumps(labels),
+                           daily_counts=json.dumps(daily_counts), risk_data=json.dumps(risk_data),
+                           device_labels=json.dumps([r[0] for r in device_rows]),
+                           device_counts=json.dumps([r[1] for r in device_rows]),
+                           browser_labels=json.dumps([r[0] for r in browser_rows]),
+                           browser_counts=json.dumps([r[1] for r in browser_rows]),
+                           hour_counts=json.dumps([dict(hour_rows).get(hour, 0) for hour in range(24)]),
+                           suspicious_trend=json.dumps([suspicious_map.get(day, 0) for day in labels]),
+                           normal_trend=json.dumps([normal_map.get(day, 0) for day in labels]))
 
 
 @app.route("/audit-logs")
@@ -1050,7 +1168,20 @@ def audit_logs():
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("audit_logs.html")
+    page = max(1, request.args.get("page", 1, type=int))
+    per_page = 20
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    total_rows = conn.execute("SELECT COUNT(*) FROM audit_logs").fetchone()[0]
+    logs = conn.execute(
+        "SELECT id, username, action, timestamp, ip_address, description "
+        "FROM audit_logs ORDER BY id DESC LIMIT ? OFFSET ?",
+        (per_page, (page - 1) * per_page),
+    ).fetchall()
+    conn.close()
+    total_pages = max(1, (total_rows + per_page - 1) // per_page)
+    return render_template("audit_logs.html", logs=logs, total_rows=total_rows,
+                           page=page, total_pages=total_pages)
 
 
 @app.route("/investigate/")
@@ -1059,7 +1190,53 @@ def investigate(alert_id=None):
     if "username" not in session:
         flash("Please login first.", "error")
         return redirect(url_for("login"))
-    return render_template("investigate.html", alert_id=alert_id)
+    # Threat Detection passes a login_logs ID. Accept the old query parameter
+    # as well so links opened before the route fix continue to work.
+    log_id = request.args.get("log_id", type=int) or alert_id
+    if log_id is None:
+        flash("Choose a login event to investigate.", "error")
+        return redirect(url_for("threat_detection"))
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    log = conn.execute("SELECT * FROM login_logs WHERE id=?", (log_id,)).fetchone()
+    if not log:
+        conn.close()
+        flash("The login event could not be found.", "error")
+        return redirect(url_for("threat_detection"))
+
+    username = log["username"]
+    user_stats = conn.execute(
+        """SELECT COUNT(*) AS total_logins,
+                  COALESCE((SELECT failed_attempts FROM users WHERE username=?), 0) AS failed_attempts,
+                  (SELECT last_login_ip FROM users WHERE username=?) AS last_login_ip
+           FROM login_logs WHERE username=?""",
+        (username, username, username),
+    ).fetchone()
+    total_suspicious = conn.execute(
+        "SELECT COUNT(*) FROM login_logs WHERE username=? AND risk IN ('HIGH','MEDIUM')",
+        (username,),
+    ).fetchone()[0]
+    prev_logins = conn.execute(
+        "SELECT * FROM login_logs WHERE username=? AND id<>? ORDER BY id DESC LIMIT 5",
+        (username, log_id),
+    ).fetchall()
+    audit_trail = conn.execute(
+        "SELECT action, timestamp, ip_address, description FROM audit_logs WHERE username=? ORDER BY id DESC LIMIT 20",
+        (username,),
+    ).fetchall()
+    conn.close()
+
+    reasons = _from_json(log["reasons"])
+    risk = (log["risk"] or "LOW").upper()
+    recommendation = {
+        "HIGH": "Block or challenge this login and review the user’s recent activity.",
+        "MEDIUM": "Verify the login with the user and monitor for additional unusual activity.",
+    }.get(risk, "No immediate action is required. Continue monitoring normal activity.")
+    return render_template("investigate.html", log=log, reasons=reasons,
+                           recommendation=recommendation, user_stats=user_stats,
+                           total_suspicious=total_suspicious, prev_logins=prev_logins,
+                           audit_trail=audit_trail)
 
 
 @app.route("/model-performance")
