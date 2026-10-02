@@ -38,7 +38,34 @@ SQLite tables retain authentication events, security alerts, incidents, event li
 
 ### Security controls
 
-Passwords and API keys are stored only as hashes. SOC APIs require an administrator session; ingestion requires an active application key matching the event application. Revoked or disabled applications are rejected, parameterized queries are used, and error responses avoid stack traces and secrets. Audit logs and notes have no normal edit/delete routes.
+Passwords and API keys are stored only as SHA-256 / Werkzeug hashes. Role-based authorization controls access to administrative functions (`role="admin"`) and SOC operations (`role in ('admin', 'analyst')`). Ingestion requires an active application key matching the event application. Revoked or disabled applications are rejected, parameterized queries are used, and error responses avoid stack traces and secrets. Audit logs and notes have no normal edit/delete routes.
+
+## Forgot Password Email OTP Flow & SMTP Configuration
+
+The system uses a secure 6-digit Email OTP (One-Time Password) workflow for password recovery:
+
+1. **OTP Generation & Anti-Enumeration**: When a user submits their email on `/forgot-password`, a cryptographically secure 6-digit numeric OTP (`secrets.randbelow`) is generated. Registered and unregistered emails receive identical generic success responses to prevent user enumeration attacks.
+2. **SHA-256 Hashed Storage**: The plaintext OTP is never saved to the database. Only a SHA-256 digest (`otp_hash`) is stored in the `password_reset_otps` table.
+3. **10-Minute Expiry & Single-Use**: OTP codes expire after 10 minutes (`RESET_OTP_TTL_MINUTES = 10`). Requesting a new OTP automatically invalidates all previous unused OTPs for that user account.
+4. **Attempt Rate Limiting**: The verification endpoint (`/verify-otp`) allows a maximum of 5 failed OTP attempts. If the 5-attempt threshold is reached, the OTP is permanently invalidated to block brute-force guessing.
+5. **Rate Limiting**: IP-based and email-based rate limits permit a maximum of 5 OTP reset requests per hour per client.
+6. **Password Reset & Account Unlocking**: Upon entering the valid 6-digit code on `/verify-otp`, the user is redirected to `/reset-password`. Successfully changing the password updates the hashed password, resets failed attempt counters, unlocks locked accounts (`account_locked = 0`), and invalidates the single-use OTP.
+
+### Gmail SMTP & Development Mode Configuration
+
+Email delivery automatically selects between Real SMTP Delivery and Development Mode:
+
+- **Real Gmail SMTP Delivery**: Set environment variables in `.env`:
+  ```env
+  MAIL_SERVER=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USE_TLS=true
+  MAIL_USERNAME=your-email@gmail.com
+  MAIL_PASSWORD=your-gmail-app-password
+  MAIL_DEFAULT_SENDER=your-email@gmail.com
+  ```
+  STARTTLS on port 587 sends real 6-digit OTP emails to users. `MAIL_PASSWORD` is strictly protected and never exposed in logs or diagnostic APIs.
+- **Development Mode Sink**: If `MAIL_SERVER` is omitted or empty in `.env`, the app operates safely in `[DEV MODE]`. OTP emails are redirected to `app.config['MAIL_OUTBOX']`, allowing full local testing without an SMTP server.
 
 ### Running and demonstrating
 
@@ -47,19 +74,20 @@ Passwords and API keys are stored only as hashes. SOC APIs require an administra
 3. Sign in as an administrator and open `/admin/soc-dashboard`.
 4. Register an active application, then submit a valid event to `POST /api/v1/auth-events` with its `X-API-Key`.
 5. Inspect the dashboard, incident list, and application summary. Use the SOC APIs while logged in to filter/paginate records, assign an incident, move it through the lifecycle, and add an append-only note.
-6. Run verification: `python -m pytest tests/ -q`.
+6. Test Forgot Password OTP flow: visit `/forgot-password`, enter a registered user email, retrieve the 6-digit code (from email inbox or Flask log / `MAIL_OUTBOX`), verify it on `/verify-otp`, and set a new password on `/reset-password`.
+7. Run verification: `python -m pytest -v`.
 
 ## Presentation overview
 
-**Target users:** application administrators and SOC analysts who need a consolidated view of multi-application authentication activity. **Usefulness:** it makes per-event model output, behavioural context, alerts, correlated incidents, and analyst actions traceable in one workflow.
+**Target users:** application administrators and SOC analysts who need a consolidated view of multi-application authentication activity. **Usefulness:** it makes per-event model output, behavioural context, alerts, correlated incidents, analyst actions, and secure user recovery traceable in one workflow.
 
-**Pages/screens:** login and registration, user dashboard, AI prediction, monitored applications, SOC dashboard, security events, alerts, incidents, incident detail/timeline, audit logs, analytics, and API documentation.
+**Pages/screens:** login and registration, forgot password, verify OTP, reset password, user dashboard, AI prediction, monitored applications, SOC dashboard, security events, alerts, incidents, incident detail/timeline, audit logs, analytics, and API documentation.
 
 **Technology stack:** Python, Flask, SQLite, scikit-learn model artifacts, pandas feature processing, Jinja templates, Bootstrap/Chart.js assets where included by the existing UI, and pytest.
 
 **Model evaluation:** model-performance metrics are shown separately from each prediction. Individual probability and confidence describe a specific event and must never be interpreted as model accuracy. Risk policy is LOW (informational), MEDIUM (analyst review), HIGH (immediate investigation), using the existing documented model/risk thresholds and historical behavioural evidence.
 
-**Database design:** applications own API credentials and retain historical event references even when disabled or revoked. `auth_events` record ML outputs; `security_alerts` retain an idempotency fingerprint and linked incident ID; `incidents`, `incident_events`, `incident_notes`, `incident_assignments`, and `audit_logs` form the analyst evidence trail.
+**Database design:** applications own API credentials and retain historical event references even when disabled or revoked. `auth_events` record ML outputs; `security_alerts` retain an idempotency fingerprint and linked incident ID; `password_reset_otps` store SHA-256 hashed 6-digit OTPs with 10-minute TTL and attempt counts; `users` table includes lower-case email index `idx_users_email_lower`; `incidents`, `incident_events`, `incident_notes`, `incident_assignments`, and `audit_logs` form the analyst evidence trail.
 
 **Future work:** connect production telemetry, add organization/application-scoped analyst roles, use a managed database and migration tooling, add distributed rate limiting, and validate with real ethically collected data.
 

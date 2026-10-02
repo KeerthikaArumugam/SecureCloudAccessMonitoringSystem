@@ -54,6 +54,21 @@ Move the incident through `NEW → TRIAGED → INVESTIGATING → CONTAINED → R
 
 Open the incident timeline/audit logs to show status, assignment, and note actions with actor and timestamp.
 
-## Step 14 — Demonstrate isolation
+## Step 14 — Demonstrate application isolation
 
 Create a second application and attempt to submit an event naming it while using the first app’s key. The API returns `403`; application summaries show only their own events, alerts, and incidents.
+
+## Step 15 — Demonstrate Forgot Password Email OTP flow & SMTP configuration
+
+1. **Demonstrate Forgot Password Request**: Open `/forgot-password`, enter a registered user's email address, and submit. Highlight anti-enumeration behavior: registered and unregistered emails show the same generic response.
+2. **Explain Hashed Storage & Expiry**: Explain that a cryptographically secure 6-digit OTP is generated (`secrets.randbelow`), hashed using SHA-256 (`otp_hash`), stored in `password_reset_otps` with a 10-minute TTL, and that old unused OTPs are automatically invalidated.
+3. **Show SMTP Delivery / Dev Mode**:
+   - In **Gmail SMTP Mode** (`MAIL_SERVER=smtp.gmail.com` in `.env`), the 6-digit OTP is delivered via STARTTLS (port 587) using a Gmail App Password.
+   - In **Development Mode** (`MAIL_SERVER` missing/empty), inspect `app.config['MAIL_OUTBOX']` or terminal logs to retrieve the generated 6-digit code.
+4. **Demonstrate OTP Verification & Attempt Limits**:
+   - Navigate to `/verify-otp`. Enter an invalid 6-digit code to demonstrate attempt counter increments. Explain that exceeding 5 failed attempts invalidates the OTP.
+   - Enter the valid 6-digit code to proceed to password reset.
+5. **Complete Password Reset & Account Unlocking**:
+   - Set and confirm a new password on `/reset-password`.
+   - Verify that the user password hash is updated, failed attempt counters are reset to 0, locked accounts are unlocked (`account_locked = 0`), and the single-use OTP is marked as used.
+   - Sign in with the new password.

@@ -39,6 +39,8 @@ def create_database(db_path=DEFAULT_DB_PATH):
     _add_column_if_missing(conn, "users", "last_login_ip", "TEXT")
     _add_column_if_missing(conn, "users", "updated_at", "TEXT")
 
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users(lower(email))")
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS login_logs(
         id INTEGER PRIMARY KEY AUTOINCREMENT,

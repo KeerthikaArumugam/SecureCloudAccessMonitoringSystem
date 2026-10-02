@@ -171,3 +171,59 @@ def test_soc_api_is_not_available_without_an_admin_session():
     client = app.test_client()
     assert client.get("/api/v1/soc/events").status_code == 403
     assert client.post("/api/v1/soc/incidents/missing/status", json={"status": "TRIAGED"}).status_code == 403
+
+
+def test_role_based_authorization_controls():
+    db = _make_isolated_db()
+    app.config.update(TESTING=True)
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO users (username, email, password, role) VALUES ('normaluser', 'norm@ex.com', 'hash', 'user')"
+    )
+    conn.execute(
+        "INSERT INTO users (username, email, password, role) VALUES ('analystuser', 'ana@ex.com', 'hash', 'analyst')"
+    )
+    conn.execute(
+        "INSERT INTO users (username, email, password, role) VALUES ('customadmin', 'adm@ex.com', 'hash', 'admin')"
+    )
+    conn.commit()
+    conn.close()
+
+    client = app.test_client()
+
+    # 1. Normal user (role='user') must be blocked from admin/SOC endpoints
+    with client.session_transaction() as sess:
+        sess["username"] = "normaluser"
+        sess["role"] = "user"
+    assert client.get("/admin").status_code == 302
+    assert client.get("/admin/applications").status_code == 302
+    assert client.get("/admin/incidents").status_code == 302
+    assert client.get("/api/v1/soc/events").status_code == 403
+
+    # 2. Analyst user (role='analyst') can access SOC endpoints, but blocked from admin apps
+    with client.session_transaction() as sess:
+        sess["username"] = "analystuser"
+        sess["role"] = "analyst"
+    assert client.get("/admin/incidents").status_code == 200
+    assert client.get("/admin/soc-dashboard").status_code == 200
+    assert client.get("/admin/applications").status_code == 302
+    assert client.get("/api/v1/soc/events").status_code == 403
+
+    # 3. Custom Admin user (role='admin') can access admin and SOC endpoints
+    with client.session_transaction() as sess:
+        sess["username"] = "customadmin"
+        sess["role"] = "admin"
+    assert client.get("/admin").status_code == 200
+    assert client.get("/admin/applications").status_code == 200
+    assert client.get("/api/v1/soc/events").status_code == 200
+
+
+def test_database_has_case_insensitive_email_index():
+    db = _make_isolated_db()
+    conn = sqlite3.connect(db)
+    row = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_users_email_lower'"
+    ).fetchone()
+    conn.close()
+    assert row is not None and row[0] == "idx_users_email_lower"
+

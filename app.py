@@ -228,8 +228,34 @@ def _page_args():
     return page, per_page if per_page in {20, 50, 100} else 20
 
 
+def _get_current_user_role():
+    """Return the authenticated user's role from session or database."""
+    username = session.get("username")
+    if not username:
+        return None
+    role = session.get("role")
+    if role in {"admin", "analyst", "user"}:
+        return role
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute("SELECT COALESCE(role, 'user') FROM users WHERE username=?", (username,)).fetchone()
+    conn.close()
+    if row:
+        user_role = row[0]
+        session["role"] = user_role
+        return user_role
+    return "admin" if username == "admin" else "user"
+
+
+def _is_admin():
+    return _get_current_user_role() == "admin"
+
+
+def _is_admin_or_analyst():
+    return _get_current_user_role() in {"admin", "analyst"}
+
+
 def _require_admin_api():
-    return bool(session.get("username") == "admin")
+    return _is_admin()
 
 
 def _valid_analyst(username):
@@ -336,7 +362,7 @@ def login():
 
         cursor.execute(
             """
-            SELECT id, username, password, failed_attempts, account_locked, user_code, trusted_device, ai_enabled
+            SELECT id, username, password, failed_attempts, account_locked, user_code, trusted_device, ai_enabled, COALESCE(role, 'user')
             FROM users WHERE username=?
             """,
             (username,),
@@ -350,6 +376,7 @@ def login():
             account_locked = user[4]
             user_code = user[5]
             ai_enabled = user[7]
+            user_role = user[8] if len(user) > 8 else ("admin" if username == "admin" else "user")
 
             if account_locked == 1:
                 conn.close()
@@ -383,6 +410,7 @@ def login():
             )
             conn.commit()
             session["username"] = username
+            session["role"] = user_role
 
             now = datetime.now()
             ip_address = request.remote_addr
@@ -691,11 +719,8 @@ def dashboard():
 
 @app.route("/admin")
 def admin():
-    if "username" not in session:
-        flash("Please login first.", "error")
-        return redirect(url_for("login"))
-    if session["username"] != "admin":
-        flash("Access Denied!", "error")
+    if not _is_admin():
+        flash("Access Denied! Administrator privileges required.", "error")
         return redirect(url_for("dashboard"))
 
     conn = sqlite3.connect(DB_PATH)
@@ -739,7 +764,7 @@ def admin():
 
 @app.route("/admin/applications", methods=["GET", "POST"])
 def admin_applications():
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin():
         flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
@@ -792,7 +817,7 @@ def admin_applications():
 
 @app.route("/admin/applications/<application_id>")
 def application_detail(application_id):
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin():
         flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
@@ -843,7 +868,7 @@ def application_detail(application_id):
 
 @app.route("/admin/applications/<application_id>/toggle", methods=["POST"])
 def toggle_application(application_id):
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin():
         flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
@@ -862,7 +887,7 @@ def toggle_application(application_id):
 
 @app.route("/admin/applications/<application_id>/rotate", methods=["POST"])
 def rotate_application_key(application_id):
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin():
         flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
@@ -877,7 +902,7 @@ def rotate_application_key(application_id):
 
 @app.route("/admin/applications/<application_id>/revoke", methods=["POST"])
 def revoke_application(application_id):
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin():
         flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
@@ -891,8 +916,8 @@ def revoke_application(application_id):
 
 @app.route("/unlock/<int:user_id>")
 def unlock_user(user_id):
-    if "username" not in session:
-        flash("Please login first.", "error")
+    if not _is_admin():
+        flash("Please login as administrator.", "error")
         return redirect(url_for("login"))
 
     conn = sqlite3.connect(DB_PATH)
@@ -1241,8 +1266,8 @@ def api_application_summary(application_id):
 @app.route("/admin/soc-dashboard")
 def soc_dashboard():
     """SOC operations center dashboard with real-time incident overview."""
-    if "username" not in session or session.get("username") != "admin":
-        flash("Please login as administrator.", "error")
+    if not _is_admin_or_analyst():
+        flash("Please login as administrator or analyst.", "error")
         return redirect(url_for("login"))
 
     try:
@@ -1257,8 +1282,8 @@ def soc_dashboard():
 @app.route("/admin/security-events")
 def security_events():
     """Security events timeline with filtering."""
-    if "username" not in session or session.get("username") != "admin":
-        flash("Please login as administrator.", "error")
+    if not _is_admin_or_analyst():
+        flash("Please login as administrator or analyst.", "error")
         return redirect(url_for("login"))
 
     try:
@@ -1324,8 +1349,8 @@ def security_events():
 @app.route("/admin/incidents")
 def incidents():
     """Incident list with filtering."""
-    if "username" not in session or session.get("username") != "admin":
-        flash("Please login as administrator.", "error")
+    if not _is_admin_or_analyst():
+        flash("Please login as administrator or analyst.", "error")
         return redirect(url_for("login"))
 
     try:
@@ -1368,8 +1393,8 @@ def incidents():
 @app.route("/admin/incidents/<incident_id>")
 def incident_detail(incident_id):
     """Incident investigation page with detailed threat analysis."""
-    if "username" not in session or session.get("username") != "admin":
-        flash("Please login as administrator.", "error")
+    if not _is_admin_or_analyst():
+        flash("Please login as administrator or analyst.", "error")
         return redirect(url_for("login"))
 
     try:
@@ -1387,7 +1412,7 @@ def incident_detail(incident_id):
 @app.route("/admin/incidents/<incident_id>/assign", methods=["POST"])
 def assign_incident_action(incident_id):
     """Assign incident to analyst."""
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin_or_analyst():
         return jsonify({"success": False, "error": "Unauthorized"}), 403
 
     try:
@@ -1405,7 +1430,7 @@ def assign_incident_action(incident_id):
 @app.route("/admin/incidents/<incident_id>/status", methods=["POST"])
 def update_incident_status_action(incident_id):
     """Update incident status."""
-    if "username" not in session or session.get("username") != "admin":
+    if not _is_admin_or_analyst():
         return jsonify({"success": False, "error": "Unauthorized"}), 403
 
     try:
